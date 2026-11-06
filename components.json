@@ -1,0 +1,32 @@
+{
+  "_comment": "Pinned upstream components. Ripperdoc downloads each one from its own project, checks the sha256, and installs it into the game copy. Nothing here is rehosted.",
+  "game": {
+    "version": "2.5.0",
+    "store": "Steam",
+    "uuid": "7D7382D0-EADD-36F0-BA1C-CEBEC1D5BEBC"
+  },
+  "components": [
+    {
+      "id": "red4ext",
+      "name": "RED4ext (macOS) with Codeware, ArchiveXL and TweakXL",
+      "kind": "release",
+      "version": "0.3.0",
+      "url": "https://github.com/codeman101/RED4ext-macos/releases/download/v0.3.0/RED4ext-macOS-arm64-0.3.0.zip",
+      "sha256": "135482a1c680de13bdb0b7b2d93b902faab1c6d98b5c61624826eea35f33dd1c",
+      "homepage": "https://github.com/codeman101/RED4ext-macos",
+      "license": "MIT (each bundled plugin carries its own LICENSE)",
+      "requires": []
+    },
+    {
+      "id": "redscript",
+      "name": "redscript compiler (scc)",
+      "kind": "release",
+      "version": "0.5.32",
+      "url": "https://github.com/jac3km4/redscript/releases/download/v0.5.32/redscript-v0.5.32-macos.zip",
+      "sha256": "b9df6cc0144d786dff9590eb6db913d20744055ab694e52fc8c4584eaee39a8a",
+      "homepage": "https://github.com/jac3km4/redscript",
+      "license": "MIT",
+      "requires": []
+    }
+  ]
+}

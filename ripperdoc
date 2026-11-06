@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+# Ripperdoc: installs the community macOS ports of the Cyberpunk 2077 mod frameworks into a clone of the game,
+# so the Steam install itself is never modified.
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
+
+usage() {
+    cat <<EOF
+usage: ripperdoc <command>
+
+  setup              clone the Steam game to "$GAME" (no extra disk space; APFS clone)
+  install [ids...]   download, verify and install components (default: all). ids: $(component_ids | tr '\n' ' ')
+  play [args...]     start the modded copy (compiles scripts first)
+  doctor             check the setup without changing anything
+  refresh            after a Steam update: re-clone the game, keep mods and frameworks
+  uninstall --yes    delete the game copy (the Steam install is untouched)
+
+Environment overrides: RIPPERDOC_GAME, RIPPERDOC_SOURCE_GAME, RIPPERDOC_CACHE
+EOF
+}
+
+cmd_setup() {
+    require_game_closed
+    [[ -x "$SOURCE_GAME/$BIN_REL" ]] || die "Cyberpunk 2077 not found at $SOURCE_GAME"
+    if [[ -e "$GAME" ]]; then
+        [[ -f "$STATE_DIR/source" ]] || die "$GAME exists but was not made by Ripperdoc. Move it away first."
+        ok "game copy already exists at $GAME"
+        return
+    fi
+    local uuid
+    uuid=$(macho_uuid "$SOURCE_GAME/$BIN_REL")
+    [[ "$uuid" == "$(pinned_uuid)" ]] ||
+        warn "Steam game build $uuid is not the build the pinned components were verified for ($(pinned_uuid))."
+    mkdir -p "$(dirname "$GAME")"
+    info "cloning $SOURCE_GAME -> $GAME"
+    clone_tree "$SOURCE_GAME" "$GAME.partial"
+    mkdir -p "$GAME.partial/.ripperdoc"
+    printf '%s\n' "$SOURCE_GAME" > "$GAME.partial/.ripperdoc/source"
+    printf '%s\n' "$uuid" > "$GAME.partial/.ripperdoc/game_uuid"
+    mv "$GAME.partial" "$GAME"
+    ok "game copy ready ($(du -sh "$GAME" | cut -f1) apparent size, shared with the Steam install until files change)"
+}
+
+# Download a release asset into the cache and check its sha256. Prints the path of the verified file.
+fetch() {
+    local id="$1" url sha file
+    url=$(json_get "component.$id.url")
+    sha=$(json_get "component.$id.sha256")
+    file="$CACHE/$id/$(basename "$url")"
+    mkdir -p "$(dirname "$file")"
+    if [[ ! -f "$file" ]] || [[ "$(shasum -a 256 "$file" | cut -d' ' -f1)" != "$sha" ]]; then
+        info "downloading $url" >&2
+        curl -fsSL "$url" -o "$file.part"
+        mv "$file.part" "$file"
+    fi
+    [[ "$(shasum -a 256 "$file" | cut -d' ' -f1)" == "$sha" ]] || {
+        rm -f "$file"
+        die "sha256 mismatch for $(basename "$url"); refusing to install it"
+    }
+    echo "$file"
+}
+
+unpack() {
+    local zip="$1" dir
+    dir=$(mktemp -d "$CACHE/unpack.XXXXXX")
+    ditto -x -k "$zip" "$dir"
+    echo "$dir"
+}
+
+install_red4ext() {
+    local zip dir rel
+    zip=$(fetch red4ext)
+    dir=$(unpack "$zip")
+    rel=$(find "$dir" -maxdepth 1 -type d -name 'RED4ext-macOS-*' | head -1)
+    [[ -d "$rel/red4ext" ]] || die "unexpected RED4ext release layout"
+    # Keep the user's config.ini across updates.
+    [[ -f "$GAME/red4ext/config.ini" ]] && cp -p "$GAME/red4ext/config.ini" "$dir/config.ini.keep"
+    rm -rf "$GAME/red4ext"
+    ditto "$rel/red4ext" "$GAME/red4ext"
+    ditto "$rel/launch_red4ext.sh" "$GAME/launch_red4ext.sh"
+    [[ -f "$dir/config.ini.keep" ]] && cp -p "$dir/config.ini.keep" "$GAME/red4ext/config.ini"
+    rm -rf "$dir"
+    # The release's own installer does the build check, binary backup and re-signing; run it inside the copy.
+    "$GAME/red4ext/macos/scripts/install_macos.sh"
+}
+
+install_redscript() {
+    local zip dir
+    zip=$(fetch redscript)
+    dir=$(unpack "$zip")
+    mkdir -p "$GAME/engine/tools"
+    ditto "$dir/engine/tools/scc" "$GAME/engine/tools/scc"
+    ditto "$dir/engine/tools/libscc_lib.dylib" "$GAME/engine/tools/libscc_lib.dylib"
+    xattr -dr com.apple.quarantine "$GAME/engine/tools/scc" "$GAME/engine/tools/libscc_lib.dylib" 2>/dev/null || true
+    rm -rf "$dir"
+}
+
+cmd_install() {
+    require_game_closed
+    require_copy
+    # macOS ships bash 3.2: no mapfile, and an empty array trips set -u.
+    local ids
+    if [[ $# -gt 0 ]]; then ids="$*"; else ids=$(component_ids | tr '\n' ' '); fi
+    mkdir -p "$CACHE"
+    for id in $ids; do
+        declare -F "install_$id" >/dev/null || die "unknown component: $id"
+        info "installing $id $(json_get "component.$id.version")"
+        "install_$id"
+        printf '%s\n' "$(json_get "component.$id.version")" > "$STATE_DIR/installed.$id"
+        ok "$id $(json_get "component.$id.version")"
+    done
+}
+
+cmd_play() {
+    require_game_closed
+    require_copy
+    [[ -x "$GAME/launch_red4ext.sh" ]] || die "RED4ext is not installed. Run: ripperdoc install"
+    pgrep -q steam_osx || warn "Steam is not running: start Steam and sign in first, or saves will not load."
+    exec "$GAME/launch_red4ext.sh" "$@"
+}
+
+cmd_doctor() {
+    local bad=0 bin="$GAME/$BIN_REL" src_bin="$SOURCE_GAME/$BIN_REL"
+    check() { if eval "$2"; then ok "$1"; else warn "$1: NO${3:+ ($3)}"; bad=1; fi; }
+
+    check "Steam game found" '[[ -x "$src_bin" ]]' "$SOURCE_GAME"
+    check "Steam game still signed by CD PROJEKT (untouched)" 'cdpr_signed "$src_bin"'
+    check "Steam build is the pinned build $(json_get game.version)" '[[ "$(macho_uuid "$src_bin")" == "$(pinned_uuid)" ]]' \
+        "a Steam update needs new component releases"
+    check "Ripperdoc game copy exists" '[[ -f "$STATE_DIR/source" ]]' "run: ripperdoc setup"
+    [[ -f "$STATE_DIR/source" ]] || return 1
+    check "copy matches the Steam build" '[[ "$(macho_uuid "$bin")" == "$(macho_uuid "$src_bin")" ]]' "run: ripperdoc refresh"
+    check "copy re-signed for RED4ext" 'has_red4ext_entitlements "$bin"' "run: ripperdoc install red4ext"
+    for id in $(component_ids); do
+        check "$id installed ($(json_get "component.$id.version"))" \
+            '[[ "$(cat "$STATE_DIR/installed.$id" 2>/dev/null)" == "$(json_get "component.$id.version")" ]]' "run: ripperdoc install $id"
+    done
+    check "game copy on the same APFS volume as Steam" 'same_apfs_volume "$SOURCE_GAME" "$GAME"'
+    check "Steam is running" 'pgrep -q steam_osx' "needed for saves"
+    local latest
+    latest=$(ls -t "$GAME"/red4ext/logs/red4ext-*.log 2>/dev/null | head -1 || true)
+    [[ -n "$latest" ]] && info "newest RED4ext log: $latest"
+    return $bad
+}
+
+cmd_refresh() {
+    require_game_closed
+    require_copy
+    local src_uuid
+    src_uuid=$(macho_uuid "$SOURCE_GAME/$BIN_REL")
+    if [[ "$src_uuid" == "$(macho_uuid "$GAME/$BIN_REL")" ]] && has_red4ext_entitlements "$GAME/$BIN_REL"; then
+        ok "copy is already up to date with the Steam build"
+        return
+    fi
+    info "re-cloning the game, keeping mods and frameworks"
+    rm -rf "$GAME.partial"
+    clone_tree "$SOURCE_GAME" "$GAME.partial"
+    for p in "${MOD_PATHS[@]}"; do
+        [[ -e "$GAME/$p" ]] || continue
+        rm -rf "$GAME.partial/$p"
+        mkdir -p "$(dirname "$GAME.partial/$p")"
+        mv "$GAME/$p" "$GAME.partial/$p"
+    done
+    printf '%s\n' "$src_uuid" > "$GAME.partial/.ripperdoc/game_uuid"
+    rm -rf "$GAME.old" && mv "$GAME" "$GAME.old" && mv "$GAME.partial" "$GAME" && rm -rf "$GAME.old"
+    if [[ "$src_uuid" != "$(pinned_uuid)" ]]; then
+        warn "the new Steam build $src_uuid is not verified by the pinned components; mods stay off until they are updated"
+        return
+    fi
+    [[ -d "$GAME/red4ext" ]] && "$GAME/red4ext/macos/scripts/install_macos.sh"
+    ok "refreshed"
+}
+
+cmd_uninstall() {
+    [[ "${1:-}" == "--yes" ]] || die "This deletes $GAME (mods inside it included). Run: ripperdoc uninstall --yes"
+    require_game_closed
+    require_copy
+    rm -rf "$GAME"
+    ok "removed $GAME; the Steam install was never modified"
+}
+
+case "${1:-}" in
+    setup) shift; cmd_setup "$@" ;;
+    install) shift; cmd_install "$@" ;;
+    play) shift; cmd_play "$@" ;;
+    doctor) shift; cmd_doctor "$@" ;;
+    refresh) shift; cmd_refresh "$@" ;;
+    uninstall) shift; cmd_uninstall "$@" ;;
+    -h|--help|help|"") usage ;;
+    *) usage; exit 2 ;;
+esac
