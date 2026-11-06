@@ -95,6 +95,31 @@ install_redscript() {
     rm -rf "$dir"
 }
 
+install_inputloader() {
+    local zip dir
+    zip=$(fetch inputloader)
+    dir=$(unpack "$zip")
+    # Only the script and its ini. The repo also has r6/config copies from game 2.31, which must not replace the
+    # game's own (2.5) input configs.
+    ditto "$dir/engine/tools/inputloader.pl" "$GAME/engine/tools/inputloader.pl"
+    ditto "$dir/engine/config/platform/mac/input_loader.ini" "$GAME/engine/config/platform/mac/input_loader.ini"
+    rm -rf "$dir"
+    prepare_inputloader
+    # Write the merged configs now, so the redirect in input_loader.ini never points at missing files.
+    (cd "$GAME" && engine/tools/inputloader.pl >/dev/null)
+    [[ -s "$GAME/r6/cache/inputContexts.xml" && -s "$GAME/r6/cache/inputUserMappings.xml" ]] ||
+        die "Input Loader did not write the merged configs"
+}
+
+# The script merges onto r6/config/inputContexts_mac.xml (the 2.3 name). Since 2.5 the game ships it as
+# inputContexts.xml, so give the script a clone of the current game's file under the old name.
+prepare_inputloader() {
+    [[ -f "$GAME/engine/tools/inputloader.pl" ]] || return 0
+    rm -f "$GAME/r6/config/inputContexts_mac.xml"
+    cp -c "$GAME/r6/config/inputContexts.xml" "$GAME/r6/config/inputContexts_mac.xml"
+    mkdir -p "$GAME/r6/input"
+}
+
 cmd_install() {
     require_game_closed
     require_copy
@@ -168,6 +193,7 @@ cmd_refresh() {
         return
     fi
     [[ -d "$GAME/red4ext" ]] && "$GAME/red4ext/macos/scripts/install_macos.sh"
+    prepare_inputloader
     ok "refreshed"
 }
 

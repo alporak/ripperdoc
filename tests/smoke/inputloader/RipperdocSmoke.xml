@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!-- Input Loader smoke test: adds one harmless action. After a merge, r6/cache/inputContexts.xml and
+     r6/cache/inputUserMappings.xml must both contain "RipperdocSmoke". -->
+<bindings>
+  <context name="RipperdocSmokeContext">
+    <action name="RipperdocSmoke" map="RipperdocSmoke_Button" />
+  </context>
+  <mapping name="RipperdocSmoke_Button" type="Button">
+    <button id="IK_F13" />
+  </mapping>
+</bindings>

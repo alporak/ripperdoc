@@ -20,6 +20,7 @@ MOD_PATHS=(
     "engine/tools/scc"
     "engine/tools/libscc_lib.dylib"
     "engine/tools/inputloader.pl"
+    "engine/config/platform/mac/input_loader.ini"
     "r6/scripts"
     "r6/tweaks"
     "r6/input"

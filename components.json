@@ -27,6 +27,17 @@
       "homepage": "https://github.com/jac3km4/redscript",
       "license": "MIT",
       "requires": []
+    },
+    {
+      "id": "inputloader",
+      "name": "Input Loader (macOS Perl rewrite)",
+      "kind": "release",
+      "version": "1.0",
+      "url": "https://github.com/risner/cyberpunk2077-input-loader-mac/releases/download/v1.0/input-loader-mac-v1.0.zip",
+      "sha256": "cb1d97f1b493f22585d578be4a3ffe98345807101d8305792c6ba3743c360f77",
+      "homepage": "https://github.com/risner/cyberpunk2077-input-loader-mac",
+      "license": "BSD-2-Clause",
+      "requires": ["red4ext"]
     }
   ]
 }
