@@ -37,7 +37,9 @@
       "sha256": "cb1d97f1b493f22585d578be4a3ffe98345807101d8305792c6ba3743c360f77",
       "homepage": "https://github.com/risner/cyberpunk2077-input-loader-mac",
       "license": "BSD-2-Clause",
-      "requires": ["red4ext"]
+      "requires": [
+        "red4ext"
+      ]
     },
     {
       "id": "modsettings",
@@ -50,7 +52,12 @@
       "sdk_commit": "87b8600fc3cdcdcc82267bfa11cf582bfe3e1537",
       "homepage": "https://github.com/jackhumbert/mod_settings/pull/32",
       "license": "MIT",
-      "requires": ["red4ext", "redscript"]
+      "requires": [
+        "red4ext",
+        "redscript"
+      ],
+      "prebuilt_url": "https://github.com/alporak/ripperdoc/releases/download/v0.1.0/modsettings-0.2.21-ceb4354-macos-arm64.zip",
+      "prebuilt_sha256": "2c3f8935c4b19eccc8d4c2eca26c801d8a773b4ea15c76708119cfe77703b6e3"
     },
     {
       "id": "cet",
@@ -64,17 +71,43 @@
       "codeware_repo": "https://github.com/codeman101/cp2077-codeware",
       "codeware_commit": "e58683fb919157a590a9a2c3059b16c6f5260dc9",
       "vendor": {
-        "luajit2": ["https://github.com/openresty/luajit2", "v2.1-20260914"],
-        "imgui": ["https://github.com/ocornut/imgui", "v1.91.1-docking"],
-        "sol2": ["https://github.com/ThePhD/sol2", "v3.5.0"],
-        "json": ["https://github.com/nlohmann/json", "v3.12.0"],
-        "hopscotch-map": ["https://github.com/Tessil/hopscotch-map", "v2.3.1"],
-        "stb": ["https://github.com/nothings/stb", "2c980bb59875b0d32144a71867fbdebb2f77cd20"],
-        "TiltedCore": ["https://github.com/tiltedphoques/TiltedCore", "v0.2.7"]
+        "luajit2": [
+          "https://github.com/openresty/luajit2",
+          "v2.1-20260914"
+        ],
+        "imgui": [
+          "https://github.com/ocornut/imgui",
+          "v1.91.1-docking"
+        ],
+        "sol2": [
+          "https://github.com/ThePhD/sol2",
+          "v3.5.0"
+        ],
+        "json": [
+          "https://github.com/nlohmann/json",
+          "v3.12.0"
+        ],
+        "hopscotch-map": [
+          "https://github.com/Tessil/hopscotch-map",
+          "v2.3.1"
+        ],
+        "stb": [
+          "https://github.com/nothings/stb",
+          "2c980bb59875b0d32144a71867fbdebb2f77cd20"
+        ],
+        "TiltedCore": [
+          "https://github.com/tiltedphoques/TiltedCore",
+          "v0.2.7"
+        ]
       },
       "homepage": "https://github.com/maximegmd/CyberEngineTweaks/pull/1068",
       "license": "GPL-3.0 with a mod exception (built locally, never redistributed by Ripperdoc)",
-      "requires": ["red4ext", "redscript"]
+      "requires": [
+        "red4ext",
+        "redscript"
+      ],
+      "prebuilt_url": "https://github.com/alporak/ripperdoc/releases/download/v0.1.0/cet-1.37.1-b4a0e23-macos-arm64.zip",
+      "prebuilt_sha256": "462f159dcfe2e80ed988db76360739884ebc7d1c4aad48b350c2a2bdedebd449"
     },
     {
       "id": "audioware",
@@ -87,7 +120,12 @@
       "sdk_commit": "103c9dd603f9fe4bdcad4f15bd1c63af8e55d7f1",
       "homepage": "https://github.com/cyb3rpsych0s1s/audioware/pull/103",
       "license": "none published: built locally on your Mac only, never redistributed",
-      "requires": ["red4ext", "redscript"]
+      "requires": [
+        "red4ext",
+        "redscript"
+      ],
+      "prebuilt_url": "https://github.com/alporak/ripperdoc/releases/download/v0.1.0/audioware-1.11.1-rc.0-0d9dad6-macos-arm64.zip",
+      "prebuilt_sha256": "a15b6dde37acae031010973c05779c0a0f1bd4696c1ba5013aad273f1d812b43"
     }
   ]
 }
