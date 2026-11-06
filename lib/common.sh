@@ -40,36 +40,48 @@ ok()   { echo "${C_GRN}ok${C_OFF}   $*"; }
 warn() { echo "${C_YEL}warn${C_OFF} $*" >&2; }
 die()  { echo "${C_RED}error${C_OFF} $*" >&2; exit 1; }
 
-# Mach-O LC_UUID of a binary, uppercase hex without dashes.
+# Everything on the normal install path uses tools every Mac has (plutil, perl, codesign, curl), so players need no
+# developer tools. python3, git and dwarfdump are only shims that ask to install the command line tools.
+
+# Mach-O LC_UUID of a binary, uppercase hex without dashes (the same reader RED4ext-macos's installer uses).
 macho_uuid() {
-    dwarfdump --uuid "$1" 2>/dev/null | awk '/arm64/ {print $2; exit}' | tr -d '-' | tr '[:lower:]' '[:upper:]'
+    perl -e 'open F,"<",$ARGV[0] or exit 1; binmode F; read F,$h,32; ($m,$ct,$st,$ft,$n)=unpack("V5",$h);
+        exit 1 unless $m==0xfeedfacf; $o=32; for(1..$n){seek F,$o,0; read F,$c,8; ($cmd,$sz)=unpack("V2",$c);
+        if($cmd==0x1b){read F,$u,16; print uc unpack("H*",$u); exit 0} $o+=$sz} exit 1' "$1" 2>/dev/null
 }
 
 pinned_uuid() {
     json_get "game.uuid" | tr -d '-' | tr '[:lower:]' '[:upper:]'
 }
 
-# Read one value from components.json, e.g. json_get game.uuid or json_get component.red4ext.sha256
-json_get() {
-    python3 - "$COMPONENTS_JSON" "$1" <<'PY'
-import json, sys
-data = json.load(open(sys.argv[1]))
-path = sys.argv[2].split(".")
-if path[0] == "component":
-    node = next((c for c in data["components"] if c["id"] == path[1]), None)
-    if node is None:
-        sys.exit(f"unknown component {path[1]}")
-    path = path[2:]
-else:
-    node = data
-for key in path:
-    node = node[key]
-print(node)
-PY
+# Index of a component in components.json by its id.
+component_index() {
+    local i n
+    n=$(plutil -extract components raw -o - "$COMPONENTS_JSON")
+    for ((i = 0; i < n; i++)); do
+        [[ "$(plutil -extract "components.$i.id" raw -o - "$COMPONENTS_JSON")" == "$1" ]] && { echo "$i"; return; }
+    done
+    die "unknown component: $1"
 }
 
+# Read one value from components.json, e.g. json_get game.uuid or json_get component.red4ext.sha256.
+# Fails (empty output, status 1) when the key is missing; json_has tests for it.
+json_get() {
+    local path="$1"
+    if [[ "$path" == component.* ]]; then
+        local rest="${path#component.}"
+        local id="${rest%%.*}"
+        path="components.$(component_index "$id").${rest#*.}"
+    fi
+    plutil -extract "$path" raw -o - "$COMPONENTS_JSON" 2>/dev/null
+}
+
+json_has() { json_get "$1" >/dev/null; }
+
 component_ids() {
-    python3 -c 'import json,sys; print("\n".join(c["id"] for c in json.load(open(sys.argv[1]))["components"]))' "$COMPONENTS_JSON"
+    local i n
+    n=$(plutil -extract components raw -o - "$COMPONENTS_JSON")
+    for ((i = 0; i < n; i++)); do plutil -extract "components.$i.id" raw -o - "$COMPONENTS_JSON"; done
 }
 
 game_running() { pgrep -fq "Cyberpunk2077.app/Contents/MacOS/Cyberpunk2077"; }

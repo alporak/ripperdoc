@@ -44,8 +44,10 @@ enum CLI {
             return 127
         }
         let process = Process()
-        process.executableURL = root.appendingPathComponent("ripperdoc")
-        process.arguments = args
+        // Run the script through the system's bash: files in a downloaded app carry the quarantine flag, and executing a
+        // quarantined script directly can be blocked by Gatekeeper, while reading one as bash's input is not.
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = [root.appendingPathComponent("ripperdoc").path] + args
         process.environment = environment
         process.currentDirectoryURL = root
         let pipe = Pipe()

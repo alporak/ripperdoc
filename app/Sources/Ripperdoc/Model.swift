@@ -15,6 +15,7 @@ struct Component: Identifiable {
     let kind: String
     let license: String
     let homepage: String
+    let optional: Bool
     var installed: String?
 
     var upToDate: Bool { installed == version }
@@ -42,7 +43,7 @@ final class AppModel: ObservableObject {
     private var timer: Timer?
 
     var hasCopy: Bool { FileManager.default.fileExists(atPath: stateDir.appendingPathComponent("source").path) }
-    var allInstalled: Bool { !components.isEmpty && components.allSatisfy(\.upToDate) }
+    var allInstalled: Bool { !components.isEmpty && components.filter { !$0.optional }.allSatisfy(\.upToDate) }
     var healthy: Bool { !checks.isEmpty && checks.allSatisfy(\.ok) }
 
     init() {
@@ -71,7 +72,7 @@ final class AppModel: ObservableObject {
             let installed = try? String(contentsOf: stateDir.appendingPathComponent("installed.\(id)"), encoding: .utf8)
             return Component(id: id, name: c["name"] as? String ?? id, version: c["version"] as? String ?? "",
                              kind: c["kind"] as? String ?? "", license: c["license"] as? String ?? "",
-                             homepage: c["homepage"] as? String ?? "",
+                             homepage: c["homepage"] as? String ?? "", optional: c["optional"] as? Bool ?? false,
                              installed: installed?.trimmingCharacters(in: .whitespacesAndNewlines))
         }
     }

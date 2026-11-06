@@ -10,7 +10,9 @@ usage() {
 usage: ripperdoc <command>
 
   setup              clone the Steam game to "$GAME" (no extra disk space; APFS clone)
-  install [ids...]   download, verify and install components (default: all). ids: $(component_ids | tr '\n' ' ')
+  install [ids...]   download, verify and install components (default: all but optional ones)
+                     ids: $(component_ids | tr '\n' ' ')
+                     --from-source builds Mod Settings, CET and Audioware locally (needs Homebrew)
   play [args...]     start the modded copy (compiles scripts first)
   doctor             check the setup without changing anything
   mod add <file>     install a mod (.zip/.rar/.7z or folder, Windows layout); [--name NAME] [--force]
@@ -45,16 +47,19 @@ cmd_setup() {
     ok "game copy ready ($(du -sh "$GAME" | cut -f1) apparent size, shared with the Steam install until files change)"
 }
 
-# Download a release asset into the cache and check its sha256. Prints the path of the verified file.
+# Download a component's file into the cache and check its sha256. Prints the path of the verified file.
+# With prefix "prebuilt_" it fetches the component's prebuilt bundle (prebuilt_url, prebuilt_sha256) instead.
 fetch() {
-    local id="$1" url sha file
-    url=$(json_get "component.$id.url")
-    sha=$(json_get "component.$id.sha256")
+    local id="$1" prefix="${2:-}" url sha file
+    url=$(json_get "component.$id.${prefix}url")
+    sha=$(json_get "component.$id.${prefix}sha256")
+    # Release testing: take the prebuilt bundles from a local folder (or another URL) before they are published.
+    [[ "$prefix" == prebuilt_ && -n "${RIPPERDOC_ASSET_BASE:-}" ]] && url="$RIPPERDOC_ASSET_BASE/$(basename "$url")"
     file="$CACHE/$id/$(basename "$url")"
     mkdir -p "$(dirname "$file")"
     if [[ ! -f "$file" ]] || [[ "$(shasum -a 256 "$file" | cut -d' ' -f1)" != "$sha" ]]; then
         info "downloading $url" >&2
-        curl -fsSL "$url" -o "$file.part"
+        curl -fsSL "$url" -o "$file.part" || die "could not download $url"
         mv "$file.part" "$file"
     fi
     [[ "$(shasum -a 256 "$file" | cut -d' ' -f1)" == "$sha" ]] || {
@@ -157,57 +162,60 @@ apply_patches() {
 }
 
 require_brew() {
+    command -v brew >/dev/null ||
+        die "building from source needs Homebrew (https://brew.sh) and: brew install $*. The release downloads need none of this."
     local missing=()
     for f in "$@"; do brew list "$f" >/dev/null 2>&1 || missing+=("$f"); done
     [[ ${#missing[@]} -eq 0 ]] || die "missing build tools; run: brew install ${missing[*]}"
 }
 
-install_modsettings() {
+# The source components (Mod Settings, CET, Audioware) are built into a bundle: their files at the paths they take in
+# the game folder. The release ships those bundles prebuilt (components.json prebuilt_url and prebuilt_sha256), so
+# players need no build tools; `install --from-source` builds them locally instead.
+
+build_modsettings() {
+    local out="$1" src sdk plugin="$1/red4ext/plugins/mod_settings"
     require_brew cmake ninja fmt spdlog
-    local src sdk plugin="$GAME/red4ext/plugins/mod_settings"
     src=$(checkout modsettings)
     sdk=$(checkout modsettings sdk_)
     apply_patches modsettings "$src"
     info "building Mod Settings"
     cmake -S "$src/macos" -B "$src/macos/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DRED4EXT_SDK_DIR="$sdk" >/dev/null
     cmake --build "$src/macos/build" | tail -1
-    rm -rf "$plugin"
-    mkdir -p "$plugin/Scripts" "$GAME/archive/Mac/mod"
+    mkdir -p "$plugin/Scripts" "$out/archive/Mac/mod"
     ditto "$src/macos/build/mod_settings.dylib" "$plugin/mod_settings.dylib"
     ditto "$src/license.md" "$plugin/license.md"
     # The launcher compiles every plugin's Scripts/ folder; the sources need no packing.
     ditto "$src/src/redscript/mod_settings" "$plugin/Scripts/mod_settings"
     # In archive/Mac/mod, ArchiveXL mounts it at startup and the plugin skips registering it late.
-    ditto "$src/src/wolvenkit/packed/archive/pc/mod/ModSettings.archive" "$GAME/archive/Mac/mod/ModSettings.archive"
+    ditto "$src/src/wolvenkit/packed/archive/pc/mod/ModSettings.archive" "$out/archive/Mac/mod/ModSettings.archive"
     # Without the .xl ArchiveXL does not merge the onscreen texts and the menu entry has an empty label.
-    ditto "$src/src/archiveXL/ModSettings.archive.xl" "$GAME/archive/Mac/mod/ModSettings.archive.xl"
-    codesign -f -s - "$plugin/mod_settings.dylib"
+    ditto "$src/src/archiveXL/ModSettings.archive.xl" "$out/archive/Mac/mod/ModSettings.archive.xl"
 }
 
 # Shallow-clone a component's build dependencies (components.json "vendor": name -> [repo, tag or commit]) into one folder.
 fetch_vendor() {
-    local id="$1" dir="$CACHE/src/vendor-$1"
+    local id="$1" dir="$CACHE/src/vendor-$1" i name repo ref
     mkdir -p "$dir"
-    python3 -c 'import json,sys
-c=next(c for c in json.load(open(sys.argv[1]))["components"] if c["id"]==sys.argv[2])
-for name,(repo,ref) in c["vendor"].items(): print(name,repo,ref)' "$COMPONENTS_JSON" "$id" |
-        while read -r name repo ref; do
-            if [[ -d "$dir/$name/.git" ]]; then
-                continue
-            fi
-            info "fetching $name $ref" >&2
-            if [[ "$ref" =~ ^[0-9a-f]{40}$ ]]; then
-                git clone -q "$repo" "$dir/$name" >&2 && git -C "$dir/$name" -c advice.detachedHead=false checkout -q "$ref"
-            else
-                git -c advice.detachedHead=false clone -q --depth 1 --branch "$ref" "$repo" "$dir/$name" >&2
-            fi
-        done
+    i=$(component_index "$id")
+    for name in $(plutil -convert xml1 -o - "$COMPONENTS_JSON" | plutil -extract "components.$i.vendor" xml1 -o - - |
+        grep -o '<key>[^<]*</key>' | sed 's/<[^>]*>//g'); do
+        repo=$(plutil -extract "components.$i.vendor.$name.0" raw -o - "$COMPONENTS_JSON")
+        ref=$(plutil -extract "components.$i.vendor.$name.1" raw -o - "$COMPONENTS_JSON")
+        [[ -d "$dir/$name/.git" ]] && continue
+        info "fetching $name $ref" >&2
+        if [[ "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+            git clone -q "$repo" "$dir/$name" >&2 && git -C "$dir/$name" -c advice.detachedHead=false checkout -q "$ref"
+        else
+            git -c advice.detachedHead=false clone -q --depth 1 --branch "$ref" "$repo" "$dir/$name" >&2
+        fi
+    done
     echo "$dir"
 }
 
-install_cet() {
+build_cet() {
+    local out="$1" src sdk codeware vendor plugin="$1/red4ext/plugins/cyber_engine_tweaks"
     require_brew cmake ninja fmt spdlog freetype libpng
-    local src sdk codeware vendor plugin="$GAME/red4ext/plugins/cyber_engine_tweaks"
     src=$(checkout cet)
     sdk=$(checkout cet sdk_)
     codeware=$(checkout cet codeware_)
@@ -216,40 +224,88 @@ install_cet() {
     cmake -S "$src/macos" -B "$src/macos/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
         -DRED4EXT_SDK_DIR="$sdk" -DCODEWARE_DIR="$codeware" -DCET_VENDOR_MAC="$vendor" >/dev/null
     cmake --build "$src/macos/build" | tail -1
-    # Keep the user's mods, settings and bindings across reinstalls.
-    mkdir -p "$plugin/mods"
+    mkdir -p "$plugin"
     ditto "$src/macos/build/cyber_engine_tweaks.dylib" "$plugin/cyber_engine_tweaks.dylib"
-    rm -rf "$plugin/fonts" "$plugin/scripts"
     ditto "$src/fonts" "$plugin/fonts"
     ditto "$src/scripts" "$plugin/scripts"
     for f in LICENSE LICENSE-EXCEPTION LICENSE-MIT; do ditto "$src/$f" "$plugin/$f"; done
-    codesign -f -s - "$plugin/cyber_engine_tweaks.dylib"
 }
 
-install_audioware() {
+build_audioware() {
+    local out="$1" cargo src sdk plugin="$1/red4ext/plugins/audioware"
     require_brew cmake
-    local cargo src sdk plugin="$GAME/red4ext/plugins/audioware"
     cargo=$(command -v cargo || echo /opt/homebrew/opt/rustup/bin/cargo)
     [[ -x "$cargo" ]] || die "Audioware needs Rust: brew install rustup && rustup default stable"
     src=$(checkout audioware)
     sdk=$(checkout audioware sdk_)
     info "building Audioware (takes a minute)"
     (cd "$src" && PATH="$(dirname "$cargo"):$PATH" RED4EXT_SDK_DIR="$sdk" "$cargo" build --quiet --release -p audioware)
-    # Keep the optional mac-hooks.txt; replace the dylib and scripts.
-    mkdir -p "$plugin" "$GAME/r6/audioware"
-    rm -rf "$plugin/Scripts"
+    mkdir -p "$plugin/Scripts"
     ditto "$src/target/release/libaudioware.dylib" "$plugin/audioware.dylib"
     # As in the Windows release: the scripts without the Debug ones.
     rsync -a --exclude "Debug.reds" --exclude "Debug/" "$src/crates/audioware/reds/" "$plugin/Scripts/"
-    codesign -f -s - "$plugin/audioware.dylib"
 }
+
+# Copy a bundle into the game copy. Folders a new version replaces wholesale (Scripts, fonts, scripts) are removed
+# first, so no stale file survives; everything else in the plugin folder (CET mods, config.json, user.ini,
+# mac-hooks.txt) is kept.
+deploy_bundle() {
+    local dir="$1" p name sub f
+    for p in "$dir"/red4ext/plugins/*/; do
+        name=$(basename "$p")
+        for sub in Scripts fonts scripts; do
+            [[ -d "$p/$sub" ]] && rm -rf "$GAME/red4ext/plugins/$name/$sub"
+        done
+    done
+    ditto "$dir" "$GAME"
+    while IFS= read -r f; do
+        xattr -d com.apple.quarantine "$GAME/$f" 2>/dev/null || true
+        codesign -f -s - "$GAME/$f" 2>/dev/null
+    done < <(cd "$dir" && find . -name '*.dylib' | sed 's#^\./##')
+}
+
+# Install a source component: its prebuilt bundle from the Ripperdoc release, or, with --from-source (or when there
+# is none), a local build.
+install_built() {
+    local id="$1" dir
+    if [[ "${FROM_SOURCE:-0}" != 1 ]] && json_has "component.$id.prebuilt_url"; then
+        dir=$(unpack "$(fetch "$id" prebuilt_)")
+    else
+        dir=$(mktemp -d "$CACHE/build.XXXXXX")
+        "build_$id" "$dir"
+    fi
+    deploy_bundle "$dir"
+    rm -rf "$dir"
+}
+
+install_modsettings() { install_built modsettings; }
+install_cet() { install_built cet; mkdir -p "$GAME/red4ext/plugins/cyber_engine_tweaks/mods"; }
+install_audioware() { install_built audioware; mkdir -p "$GAME/r6/audioware"; }
+
+is_optional() { [[ "$(json_get "component.$1.optional" || true)" == "true" ]]; }
 
 cmd_install() {
     require_game_closed
     require_copy
     # macOS ships bash 3.2: no mapfile, and an empty array trips set -u.
-    local ids
-    if [[ $# -gt 0 ]]; then ids="$*"; else ids=$(component_ids | tr '\n' ' '); fi
+    local ids="" id
+    FROM_SOURCE=0
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --from-source) FROM_SOURCE=1 ;;
+            *) ids="$ids $1" ;;
+        esac
+        shift
+    done
+    if [[ -z "$ids" ]]; then
+        for id in $(component_ids); do
+            if is_optional "$id"; then
+                info "skipping $id (optional; install it with: ripperdoc install $id)"
+            else
+                ids="$ids $id"
+            fi
+        done
+    fi
     mkdir -p "$CACHE"
     for id in $ids; do
         declare -F "install_$id" >/dev/null || die "unknown component: $id"
@@ -281,6 +337,10 @@ cmd_doctor() {
     check "copy matches the Steam build" '[[ "$(macho_uuid "$bin")" == "$(macho_uuid "$src_bin")" ]]' "run: ripperdoc refresh"
     check "copy re-signed for RED4ext" 'has_red4ext_entitlements "$bin"' "run: ripperdoc install red4ext"
     for id in $(component_ids); do
+        if is_optional "$id" && [[ ! -f "$STATE_DIR/installed.$id" ]]; then
+            info "$id not installed (optional)"
+            continue
+        fi
         check "$id installed ($(json_get "component.$id.version"))" \
             '[[ "$(cat "$STATE_DIR/installed.$id" 2>/dev/null)" == "$(json_get "component.$id.version")" ]]' "run: ripperdoc install $id"
     done
@@ -335,6 +395,7 @@ case "${1:-}" in
     play) shift; cmd_play "$@" ;;
     doctor) shift; cmd_doctor "$@" ;;
     mod) shift; cmd_mod "$@" ;;
+    build-bundle) shift; [[ $# -eq 2 ]] || die "usage: ripperdoc build-bundle <id> <outdir>"; mkdir -p "$2"; "build_$1" "$2" ;;
     refresh) shift; cmd_refresh "$@" ;;
     uninstall) shift; cmd_uninstall "$@" ;;
     -h|--help|help|"") usage ;;
