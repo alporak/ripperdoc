@@ -1,4 +1,4 @@
-Ripperdoc @VERSION installs the Cyberpunk 2077 mod frameworks on the **native Mac version** of the game (Apple silicon,
+Ripperdoc @VERSION@ installs the Cyberpunk 2077 mod frameworks on the **native Mac version** of the game (Apple silicon,
 Steam, game version **2.5.0**): RED4ext, redscript, TweakXL, ArchiveXL, Codeware, Cyber Engine Tweaks, Mod Settings,
 Input Loader and Audioware. No developer tools needed.
 
@@ -6,7 +6,7 @@ Input Loader and Audioware. No developer tools needed.
 
 ## Install
 
-1. Download **Ripperdoc-@VERSION.zip** below and double-click it. Move **Ripperdoc** to your Applications folder.
+1. Download **Ripperdoc-@VERSION@.zip** below and double-click it. Move **Ripperdoc** to your Applications folder.
 2. Open Ripperdoc. macOS says it can't verify the app, because Ripperdoc isn't notarized (that needs a paid Apple
    account). Click **Done**, then go to **System Settings > Privacy & Security**, scroll down, click **Open Anyway** next
    to Ripperdoc and confirm. This is needed only once.
@@ -23,7 +23,7 @@ plugins don't work on a Mac. **Cyber Engine Tweaks overlay:** fn+F11.
 
 | File | What it is |
 | --- | --- |
-| `Ripperdoc-@VERSION.zip` | the app; it downloads the frameworks itself and checks each one by sha256 |
+| `Ripperdoc-@VERSION@.zip` | the app; it downloads the frameworks itself and checks each one by sha256 |
 | `modsettings-*.zip`, `cet-*.zip`, `audioware-*.zip` | prebuilt Mac builds of Mod Settings, Cyber Engine Tweaks and Audioware, which have no Mac release of their own yet. The app downloads them |
 | `SHA256SUMS` | checksums of all of the above |
 

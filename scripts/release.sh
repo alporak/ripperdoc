@@ -70,6 +70,7 @@ app/build-app.sh >/dev/null
 # 3. Checksums and notes.
 (cd "$OUT" && shasum -a 256 *.zip > SHA256SUMS)
 sed "s/@VERSION@/$VERSION/g; s#@REPO@#$REPO_SLUG#g" docs/RELEASE_NOTES.md > "$OUT/NOTES.md"
+if grep -n "@[A-Z_]*@\|@VERSION\|@REPO" "$OUT/NOTES.md"; then echo "unfilled placeholder in the release notes" >&2; exit 1; fi
 cat "$OUT/SHA256SUMS"
 echo "release files in $OUT"
 
