@@ -175,6 +175,8 @@ install_modsettings() {
     ditto "$src/src/redscript/mod_settings" "$plugin/Scripts/mod_settings"
     # In archive/Mac/mod, ArchiveXL mounts it at startup and the plugin skips registering it late.
     ditto "$src/src/wolvenkit/packed/archive/pc/mod/ModSettings.archive" "$GAME/archive/Mac/mod/ModSettings.archive"
+    # Without the .xl ArchiveXL does not merge the onscreen texts and the menu entry has an empty label.
+    ditto "$src/src/archiveXL/ModSettings.archive.xl" "$GAME/archive/Mac/mod/ModSettings.archive.xl"
     codesign -f -s - "$plugin/mod_settings.dylib"
 }
 
