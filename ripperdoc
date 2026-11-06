@@ -222,6 +222,24 @@ install_cet() {
     codesign -f -s - "$plugin/cyber_engine_tweaks.dylib"
 }
 
+install_audioware() {
+    require_brew cmake
+    local cargo src sdk plugin="$GAME/red4ext/plugins/audioware"
+    cargo=$(command -v cargo || echo /opt/homebrew/opt/rustup/bin/cargo)
+    [[ -x "$cargo" ]] || die "Audioware needs Rust: brew install rustup && rustup default stable"
+    src=$(checkout audioware)
+    sdk=$(checkout audioware sdk_)
+    info "building Audioware (takes a minute)"
+    (cd "$src" && PATH="$(dirname "$cargo"):$PATH" RED4EXT_SDK_DIR="$sdk" "$cargo" build --quiet --release -p audioware)
+    # Keep the optional mac-hooks.txt; replace the dylib and scripts.
+    mkdir -p "$plugin" "$GAME/r6/audioware"
+    rm -rf "$plugin/Scripts"
+    ditto "$src/target/release/libaudioware.dylib" "$plugin/audioware.dylib"
+    # As in the Windows release: the scripts without the Debug ones.
+    rsync -a --exclude "Debug.reds" --exclude "Debug/" "$src/crates/audioware/reds/" "$plugin/Scripts/"
+    codesign -f -s - "$plugin/audioware.dylib"
+}
+
 cmd_install() {
     require_game_closed
     require_copy

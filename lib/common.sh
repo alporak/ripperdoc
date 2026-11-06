@@ -24,6 +24,7 @@ MOD_PATHS=(
     "r6/scripts"
     "r6/tweaks"
     "r6/input"
+    "r6/audioware"
     "archive/Mac/mod"
     "bin"
 )

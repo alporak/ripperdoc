@@ -75,6 +75,19 @@
       "homepage": "https://github.com/maximegmd/CyberEngineTweaks/pull/1068",
       "license": "GPL-3.0 with a mod exception (built locally, never redistributed by Ripperdoc)",
       "requires": ["red4ext", "redscript"]
+    },
+    {
+      "id": "audioware",
+      "name": "Audioware (macOS port, built from source)",
+      "kind": "source",
+      "version": "1.11.1-rc.0+0d9dad6",
+      "repo": "https://github.com/codeman101/audioware",
+      "commit": "0d9dad67c6d9d7f757f473b1b081060383ae2536",
+      "sdk_repo": "https://github.com/codeman101/RED4ext.SDK-macos",
+      "sdk_commit": "103c9dd603f9fe4bdcad4f15bd1c63af8e55d7f1",
+      "homepage": "https://github.com/cyb3rpsych0s1s/audioware/pull/103",
+      "license": "none published: built locally on your Mac only, never redistributed",
+      "requires": ["red4ext", "redscript"]
     }
   ]
 }
