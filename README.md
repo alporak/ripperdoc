@@ -25,6 +25,24 @@ redscript, CET, ArchiveXL, TweakXL, Codeware and more. It uses the community Mac
 
 ## Use
 
+### The app
+
+```bash
+git clone https://github.com/alporak/ripperdoc.git && cd ripperdoc
+app/build-app.sh                     # builds app/build/Ripperdoc.app (no Xcode project needed)
+open app/build/Ripperdoc.app
+```
+
+**Status** walks you through setup (create the game copy, install the frameworks) and shows every health check.
+**Frameworks** lists each component with its version, license and upstream project. **Mods** takes mods by drag and drop.
+**Play** starts the modded game; its output goes to **Log**. The app carries the CLI below and runs it for every
+action, so both always behave the same.
+
+The app is ad-hoc signed. On another Mac, the first launch needs right-click > **Open**. To work on it in Xcode, open the
+`app/` folder (it is a Swift package).
+
+### The command line
+
 ```bash
 git clone https://github.com/alporak/ripperdoc.git && cd ripperdoc
 ./ripperdoc setup      # clone the game (instant, no extra disk space)
@@ -67,6 +85,19 @@ Keyboard Shortcuts > Mission Control) or press fn+F11, or change the key in CET'
 ## Status
 
 See [docs/STATUS.md](docs/STATUS.md) for what is verified on 2.5.0, and what is still missing.
+
+## Patches Ripperdoc carries
+
+Each patch fixes an upstream port for the public macOS loader. It is applied to the pinned commit at install time,
+and it goes away once the fix is merged upstream.
+
+| Patch | Fixes |
+| --- | --- |
+| [`patches/modsettings/0001`](patches/modsettings/0001-register-natives-from-the-rtti-post-register-callback.patch) | Mod Settings waited for a Frida-based loader to call `modsettings_registerNatives`; with the public loader its natives never registered and the game stopped at script load. It now registers from the RTTI post-register callback, after Codeware |
+
+Ripperdoc also works around two install issues without patching anyone's code: it installs `ModSettings.archive.xl`
+(without it, the menu entry has no label), and it gives Input Loader the game's 2.5 input file under the 2.3 name the
+script reads, instead of the stale 2.31 configs in its repository.
 
 ## Credits
 
