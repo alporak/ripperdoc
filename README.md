@@ -40,7 +40,16 @@ To remove everything: `./ripperdoc uninstall --yes` deletes the clone. Your Stea
 
 ## Installing mods
 
-Put mod files into the **clone** (`~/Games/Cyberpunk 2077 Ripperdoc`), in the same folders as on Windows:
+```bash
+./ripperdoc mod add ~/Downloads/SomeMod.zip   # .zip, .rar, .7z or a folder, as downloaded for Windows
+./ripperdoc mod list
+./ripperdoc mod remove SomeMod
+```
+
+`mod add` maps the Windows folders to the Mac ones below, refuses to overwrite files it does not own, skips what cannot
+work on a Mac (Windows `.dll` plugins, REDmod) and records every file, so `mod remove` takes out exactly those.
+
+By hand, files go into the **clone** (`~/Games/Cyberpunk 2077 Ripperdoc`), in these folders:
 
 | Mod files | Folder |
 | --- | --- |

@@ -3,6 +3,7 @@
 # so the Steam install itself is never modified.
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
+source "$RIPPERDOC_ROOT/lib/mods.sh"
 
 usage() {
     cat <<EOF
@@ -12,6 +13,9 @@ usage: ripperdoc <command>
   install [ids...]   download, verify and install components (default: all). ids: $(component_ids | tr '\n' ' ')
   play [args...]     start the modded copy (compiles scripts first)
   doctor             check the setup without changing anything
+  mod add <file>     install a mod (.zip/.rar/.7z or folder, Windows layout); [--name NAME] [--force]
+  mod remove <name>  remove exactly the files that mod installed
+  mod list           installed mods
   refresh            after a Steam update: re-clone the game, keep mods and frameworks
   uninstall --yes    delete the game copy (the Steam install is untouched)
 
@@ -330,6 +334,7 @@ case "${1:-}" in
     install) shift; cmd_install "$@" ;;
     play) shift; cmd_play "$@" ;;
     doctor) shift; cmd_doctor "$@" ;;
+    mod) shift; cmd_mod "$@" ;;
     refresh) shift; cmd_refresh "$@" ;;
     uninstall) shift; cmd_uninstall "$@" ;;
     -h|--help|help|"") usage ;;

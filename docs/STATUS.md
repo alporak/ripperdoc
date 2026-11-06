@@ -15,4 +15,10 @@ Tested on an M4 Mac, macOS 27.0.1.
 | Cyber Engine Tweaks | 1.38.0 (codeman101/CyberEngineTweaks `b4a0e23`, built from source) | maximegmd/CyberEngineTweaks PR #1068 | **works** (automated); overlay use not yet checked by hand | Lua VM starts, mods load (smoke mod: `init ok`, reads game state through `Game.*`), Metal overlay initialises, all game-state hooks install. Address rows checked against 2.5: 12 of 18 confirmed (verified RED4ext DB, other plugins' tables, vtable slots); the 6 log-native rows are plausible (single registration reference, real prologues). Known gap: `Could not get OodleLZ_Decompress`, so no TweakDB names in its tools. GPL-3.0: built locally, never bundled |
 | Audioware | 1.11.1-rc.0 (codeman101/audioware `0d9dad6`, built from source with Rust) | cyb3rpsych0s1s/audioware PR #103 | **loads, engine starts**; no sound tested yet | 25 hooks attached (0 failed, 1 skipped: inlined on Mac), audio engine initialises, its script services load. Works on the public loader without a patch: its private-launcher path only runs when that launcher is detected. The repo has no license, so it is built on your Mac and never redistributed |
 
+## Mods
+
+| Mod | State | Evidence |
+| --- | --- | --- |
+| Project Capricorn 1.1 (Nexus 36701) | **loads**; gameplay not tested yet | installed with `ripperdoc mod add`: its scripts compile and load, TweakXL imports 71 records, ArchiveXL merges its texts and journal, Input Loader merges its bindings, its CET Lua mod starts |
+
 "Loads" means the plugin started without errors. "Works" means its job was checked end to end.
