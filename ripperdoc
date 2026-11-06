@@ -130,7 +130,7 @@ checkout() {
     if [[ ! -d "$dir/.git" ]]; then
         info "fetching $repo at ${commit:0:12}" >&2
         git clone -q "$repo" "$dir.part" >&2
-        git -C "$dir.part" checkout -q "$commit"
+        git -C "$dir.part" -c advice.detachedHead=false checkout -q "$commit"
         git -C "$dir.part" submodule update -q --init --recursive >&2
         mv "$dir.part" "$dir"
     fi
@@ -178,6 +178,48 @@ install_modsettings() {
     # Without the .xl ArchiveXL does not merge the onscreen texts and the menu entry has an empty label.
     ditto "$src/src/archiveXL/ModSettings.archive.xl" "$GAME/archive/Mac/mod/ModSettings.archive.xl"
     codesign -f -s - "$plugin/mod_settings.dylib"
+}
+
+# Shallow-clone a component's build dependencies (components.json "vendor": name -> [repo, tag or commit]) into one folder.
+fetch_vendor() {
+    local id="$1" dir="$CACHE/src/vendor-$1"
+    mkdir -p "$dir"
+    python3 -c 'import json,sys
+c=next(c for c in json.load(open(sys.argv[1]))["components"] if c["id"]==sys.argv[2])
+for name,(repo,ref) in c["vendor"].items(): print(name,repo,ref)' "$COMPONENTS_JSON" "$id" |
+        while read -r name repo ref; do
+            if [[ -d "$dir/$name/.git" ]]; then
+                continue
+            fi
+            info "fetching $name $ref" >&2
+            if [[ "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+                git clone -q "$repo" "$dir/$name" >&2 && git -C "$dir/$name" -c advice.detachedHead=false checkout -q "$ref"
+            else
+                git -c advice.detachedHead=false clone -q --depth 1 --branch "$ref" "$repo" "$dir/$name" >&2
+            fi
+        done
+    echo "$dir"
+}
+
+install_cet() {
+    require_brew cmake ninja fmt spdlog freetype libpng
+    local src sdk codeware vendor plugin="$GAME/red4ext/plugins/cyber_engine_tweaks"
+    src=$(checkout cet)
+    sdk=$(checkout cet sdk_)
+    codeware=$(checkout cet codeware_)
+    vendor=$(fetch_vendor cet)
+    info "building Cyber Engine Tweaks (takes a few minutes)"
+    cmake -S "$src/macos" -B "$src/macos/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+        -DRED4EXT_SDK_DIR="$sdk" -DCODEWARE_DIR="$codeware" -DCET_VENDOR_MAC="$vendor" >/dev/null
+    cmake --build "$src/macos/build" | tail -1
+    # Keep the user's mods, settings and bindings across reinstalls.
+    mkdir -p "$plugin/mods"
+    ditto "$src/macos/build/cyber_engine_tweaks.dylib" "$plugin/cyber_engine_tweaks.dylib"
+    rm -rf "$plugin/fonts" "$plugin/scripts"
+    ditto "$src/fonts" "$plugin/fonts"
+    ditto "$src/scripts" "$plugin/scripts"
+    for f in LICENSE LICENSE-EXCEPTION LICENSE-MIT; do ditto "$src/$f" "$plugin/$f"; done
+    codesign -f -s - "$plugin/cyber_engine_tweaks.dylib"
 }
 
 cmd_install() {

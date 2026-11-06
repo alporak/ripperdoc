@@ -51,6 +51,30 @@
       "homepage": "https://github.com/jackhumbert/mod_settings/pull/32",
       "license": "MIT",
       "requires": ["red4ext", "redscript"]
+    },
+    {
+      "id": "cet",
+      "name": "Cyber Engine Tweaks (macOS port, built from source)",
+      "kind": "source",
+      "version": "1.37.1+b4a0e23",
+      "repo": "https://github.com/codeman101/CyberEngineTweaks",
+      "commit": "b4a0e23b3171e145d2f1dbe86f3115147180514c",
+      "sdk_repo": "https://github.com/codeman101/RED4ext.SDK-macos",
+      "sdk_commit": "cc4ceeac66e562e54f732155fb50194464db3d56",
+      "codeware_repo": "https://github.com/codeman101/cp2077-codeware",
+      "codeware_commit": "e58683fb919157a590a9a2c3059b16c6f5260dc9",
+      "vendor": {
+        "luajit2": ["https://github.com/openresty/luajit2", "v2.1-20260914"],
+        "imgui": ["https://github.com/ocornut/imgui", "v1.91.1-docking"],
+        "sol2": ["https://github.com/ThePhD/sol2", "v3.5.0"],
+        "json": ["https://github.com/nlohmann/json", "v3.12.0"],
+        "hopscotch-map": ["https://github.com/Tessil/hopscotch-map", "v2.3.1"],
+        "stb": ["https://github.com/nothings/stb", "2c980bb59875b0d32144a71867fbdebb2f77cd20"],
+        "TiltedCore": ["https://github.com/tiltedphoques/TiltedCore", "v0.2.7"]
+      },
+      "homepage": "https://github.com/maximegmd/CyberEngineTweaks/pull/1068",
+      "license": "GPL-3.0 with a mod exception (built locally, never redistributed by Ripperdoc)",
+      "requires": ["red4ext", "redscript"]
     }
   ]
 }
