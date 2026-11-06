@@ -15,6 +15,13 @@ Tested on an M4 Mac, macOS 27.0.1.
 | Cyber Engine Tweaks | 1.38.0 (codeman101/CyberEngineTweaks `b4a0e23`, built from source) | maximegmd/CyberEngineTweaks PR #1068 | **works** (automated); overlay use not yet checked by hand | Lua VM starts, mods load (smoke mod: `init ok`, reads game state through `Game.*`), Metal overlay initialises, all game-state hooks install. Address rows checked against 2.5: 12 of 18 confirmed (verified RED4ext DB, other plugins' tables, vtable slots); the 6 log-native rows are plausible (single registration reference, real prologues). Known gap: `Could not get OodleLZ_Decompress`, so no TweakDB names in its tools. GPL-3.0: built locally, never bundled |
 | Audioware | 1.11.1-rc.0 (codeman101/audioware `0d9dad6`, built from source with Rust) | cyb3rpsych0s1s/audioware PR #103 | **loads, engine starts**; no sound tested yet | 25 hooks attached (0 failed, 1 skipped: inlined on Mac), audio engine initialises, its script services load. Works on the public loader without a patch: its private-launcher path only runs when that launcher is detected. The repo has no license, so it is built on your Mac and never redistributed |
 
+## Release v0.1.0
+
+Installed from the published GitHub release as a player would: the app zip matches SHA256SUMS, the prebuilt Mod
+Settings, CET and Audioware bundles download from the release and match their pins, all checks pass, and no developer
+tool (python3, git, dwarfdump, Homebrew, CMake, Rust, Swift) was called at any point. Before publishing, the same
+bundles were installed into a separate game copy and loaded in game (6 plugins, scripts load, Audioware hooks attach).
+
 ## Ripperdoc.app
 
 Built with the Xcode command line tools (`app/build-app.sh`). Checked by hand: the Status page runs `doctor` and shows
