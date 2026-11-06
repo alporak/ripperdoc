@@ -38,6 +38,19 @@
       "homepage": "https://github.com/risner/cyberpunk2077-input-loader-mac",
       "license": "BSD-2-Clause",
       "requires": ["red4ext"]
+    },
+    {
+      "id": "modsettings",
+      "name": "Mod Settings (macOS port, built from source)",
+      "kind": "source",
+      "version": "0.2.21+ceb4354",
+      "repo": "https://github.com/codeman101/mod_settings",
+      "commit": "ceb435433536246ecab29c4de1123c2498ec4d5c",
+      "sdk_repo": "https://github.com/codeman101/RED4ext.SDK-macos",
+      "sdk_commit": "87b8600fc3cdcdcc82267bfa11cf582bfe3e1537",
+      "homepage": "https://github.com/jackhumbert/mod_settings/pull/32",
+      "license": "MIT",
+      "requires": ["red4ext", "redscript"]
     }
   ]
 }

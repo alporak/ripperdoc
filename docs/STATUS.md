@@ -11,7 +11,7 @@ Tested on an M4 Mac, macOS 27.0.1.
 | redscript | 0.5.32 | jac3km4/redscript release | **works** | compiles game + plugin scripts before launch |
 | Steam integration | | | **works** | stats and achievements received from Steam when started from the clone |
 | Input Loader | 1.0 | risner/cyberpunk2077-input-loader-mac release | **merge works**; in-game redirect not yet confirmed | smoke binding merged and removed cleanly; with no mods the merged configs have identical bindings to 2.5's. Its 2.31 `r6/config` copies are not installed: 2.5 renamed `inputContexts_mac.xml` to `inputContexts.xml`, so Ripperdoc clones the 2.5 file under the old name for the script |
-| Mod Settings | | jackhumbert/mod_settings PR #32 | not yet | |
+| Mod Settings | 0.2.21 (codeman101/mod_settings `ceb4354`, built from source) + Ripperdoc patch | jackhumbert/mod_settings PR #32 | **loads, natives register**; in-game menu not yet checked | Unpatched it made script loading fail (`R30 script loader returned 0`, then a SIGTRAP): the port waits for a Frida-based loader to call `modsettings_registerNatives`, which the public loader never does. `patches/modsettings/0001` registers it from the RTTI post-register callback, after Codeware, like TweakXL/ArchiveXL/Codeware do. Then: 7 types registered, both hooks attached, scripts load (`returned 1`), clean shutdown |
 | Cyber Engine Tweaks | | maximegmd/CyberEngineTweaks PR #1068 | not yet | GPL-3.0: Ripperdoc will build/download it, never bundle it |
 | Audioware | | cyb3rpsych0s1s/audioware PR #103 | not yet | the repo has no license, so it is local builds only |
 

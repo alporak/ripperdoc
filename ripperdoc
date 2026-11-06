@@ -120,6 +120,64 @@ prepare_inputloader() {
     mkdir -p "$GAME/r6/input"
 }
 
+# Check out a pinned commit of a component's repo (or of its SDK, with prefix "sdk_") under $CACHE/src.
+# Prints the checkout path.
+checkout() {
+    local id="$1" prefix="${2:-}" repo commit dir
+    repo=$(json_get "component.$id.${prefix}repo")
+    commit=$(json_get "component.$id.${prefix}commit")
+    dir="$CACHE/src/$(basename "$repo")@${commit:0:12}"
+    if [[ ! -d "$dir/.git" ]]; then
+        info "fetching $repo at ${commit:0:12}" >&2
+        git clone -q "$repo" "$dir.part" >&2
+        git -C "$dir.part" checkout -q "$commit"
+        git -C "$dir.part" submodule update -q --init --recursive >&2
+        mv "$dir.part" "$dir"
+    fi
+    [[ "$(git -C "$dir" rev-parse HEAD)" == "$commit" ]] || die "$dir is not at the pinned commit $commit"
+    echo "$dir"
+}
+
+# Apply Ripperdoc's patches for a component (patches/<id>/*.patch) to its checkout. Safe to repeat.
+# Each patch is offered upstream; it stays here only until the pinned commit includes it.
+apply_patches() {
+    local id="$1" dir="$2" p
+    for p in "$RIPPERDOC_ROOT/patches/$id"/*.patch; do
+        [[ -f "$p" ]] || continue
+        if git -C "$dir" apply --reverse --check "$p" 2>/dev/null; then
+            continue
+        fi
+        git -C "$dir" apply "$p" || die "patch $(basename "$p") does not apply to $id"
+        info "applied $(basename "$p")" >&2
+    done
+}
+
+require_brew() {
+    local missing=()
+    for f in "$@"; do brew list "$f" >/dev/null 2>&1 || missing+=("$f"); done
+    [[ ${#missing[@]} -eq 0 ]] || die "missing build tools; run: brew install ${missing[*]}"
+}
+
+install_modsettings() {
+    require_brew cmake ninja fmt spdlog
+    local src sdk plugin="$GAME/red4ext/plugins/mod_settings"
+    src=$(checkout modsettings)
+    sdk=$(checkout modsettings sdk_)
+    apply_patches modsettings "$src"
+    info "building Mod Settings"
+    cmake -S "$src/macos" -B "$src/macos/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DRED4EXT_SDK_DIR="$sdk" >/dev/null
+    cmake --build "$src/macos/build" | tail -1
+    rm -rf "$plugin"
+    mkdir -p "$plugin/Scripts" "$GAME/archive/Mac/mod"
+    ditto "$src/macos/build/mod_settings.dylib" "$plugin/mod_settings.dylib"
+    ditto "$src/license.md" "$plugin/license.md"
+    # The launcher compiles every plugin's Scripts/ folder; the sources need no packing.
+    ditto "$src/src/redscript/mod_settings" "$plugin/Scripts/mod_settings"
+    # In archive/Mac/mod, ArchiveXL mounts it at startup and the plugin skips registering it late.
+    ditto "$src/src/wolvenkit/packed/archive/pc/mod/ModSettings.archive" "$GAME/archive/Mac/mod/ModSettings.archive"
+    codesign -f -s - "$plugin/mod_settings.dylib"
+}
+
 cmd_install() {
     require_game_closed
     require_copy
