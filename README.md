@@ -6,6 +6,15 @@ redscript, CET, ArchiveXL, TweakXL, Codeware and more. It uses the community Mac
 > **Unofficial. Not affiliated with CD PROJEKT RED** or with the authors of the frameworks it installs. Cyberpunk 2077
 > is a trademark of CD PROJEKT S.A. Modding is at your own risk: back up your saves.
 
+## Download (no developer tools needed)
+
+1. Get **Ripperdoc-x.y.z.zip** from the [latest release](https://github.com/alporak/ripperdoc/releases/latest), open it,
+   and move **Ripperdoc** to Applications.
+2. The first time you open it, macOS says it can't verify the app: Ripperdoc isn't notarized, because that needs a
+   paid Apple account. Click **Done**, then **System Settings > Privacy & Security > Open Anyway**. This is needed only once.
+3. On the **Status** page, run *Create the game copy*, then *Install all frameworks*.
+4. Start Steam, then press **Play** in Ripperdoc.
+
 ## How it works
 
 - **Your Steam install is never modified.** Ripperdoc clones the game into `~/Games/Cyberpunk 2077 Ripperdoc` with an
@@ -19,13 +28,12 @@ redscript, CET, ArchiveXL, TweakXL, Codeware and more. It uses the community Mac
 
 - Cyberpunk 2077 **2.5.0** (Steam) on an Apple silicon Mac, macOS 15.5 or later
 - The game folder and your home folder on the same APFS volume (the default)
-- Xcode command line tools (`xcode-select --install`)
-- For the components built from source (Mod Settings, CET, Audioware): `brew install cmake ninja fmt spdlog freetype libpng rustup`,
-  then `rustup default stable`
+- Only for building from source (`--from-source`, or the app from the repo): Xcode command line tools, and
+  `brew install cmake ninja fmt spdlog freetype libpng rustup`, then `rustup default stable`
 
 ## Use
 
-### The app
+### The app, from source
 
 ```bash
 git clone https://github.com/alporak/ripperdoc.git && cd ripperdoc
@@ -42,6 +50,9 @@ The app is ad-hoc signed. On another Mac, the first launch needs right-click > *
 `app/` folder (it is a Swift package).
 
 ### The command line
+
+`install` downloads prebuilt Mod Settings, CET and Audioware bundles from the release; `install --from-source` builds
+them locally instead (needs the Homebrew packages above). Maintainers: `scripts/release.sh build|publish <version>`.
 
 ```bash
 git clone https://github.com/alporak/ripperdoc.git && cd ripperdoc
@@ -110,7 +121,7 @@ Ripperdoc is only the glue. The real work belongs to:
 | redscript | [jac3km4/redscript](https://github.com/jac3km4/redscript) | MIT |
 | Input Loader (macOS) | [risner/cyberpunk2077-input-loader-mac](https://github.com/risner/cyberpunk2077-input-loader-mac), a rewrite of [jackhumbert/cyberpunk2077-input-loader](https://github.com/jackhumbert/cyberpunk2077-input-loader) | BSD-2-Clause |
 | Mod Settings (macOS) | [codeman101/mod_settings](https://github.com/codeman101/mod_settings) ([PR #32](https://github.com/jackhumbert/mod_settings/pull/32)), by [jackhumbert](https://github.com/jackhumbert/mod_settings) | MIT |
-| Cyber Engine Tweaks (macOS) | [codeman101/CyberEngineTweaks](https://github.com/codeman101/CyberEngineTweaks) ([PR #1068](https://github.com/maximegmd/CyberEngineTweaks/pull/1068)), by the [CET team](https://github.com/maximegmd/CyberEngineTweaks). Built on your Mac, never redistributed | GPL-3.0 + mod exception |
-| Audioware (macOS) | [codeman101/audioware](https://github.com/codeman101/audioware) ([PR #103](https://github.com/cyb3rpsych0s1s/audioware/pull/103)), by [Roms1383](https://github.com/cyb3rpsych0s1s/audioware). Built on your Mac, never redistributed | none published |
+| Cyber Engine Tweaks (macOS) | [codeman101/CyberEngineTweaks](https://github.com/codeman101/CyberEngineTweaks) ([PR #1068](https://github.com/maximegmd/CyberEngineTweaks/pull/1068)), by the [CET team](https://github.com/maximegmd/CyberEngineTweaks). The release's prebuilt bundle is built from that exact commit and the pinned dependencies in `components.json` | GPL-3.0 + mod exception |
+| Audioware (macOS) | [codeman101/audioware](https://github.com/codeman101/audioware) ([PR #103](https://github.com/cyb3rpsych0s1s/audioware/pull/103)), by [Roms1383](https://github.com/cyb3rpsych0s1s/audioware). Its repository publishes no license; it is included non-commercially, with credit, and will be removed at the author's request | none published |
 
 Ripperdoc itself: MIT, see [LICENSE](LICENSE).

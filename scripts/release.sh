@@ -1,26 +1,45 @@
 #!/usr/bin/env bash
-# Builds a Ripperdoc release into release/<version>/:
-#   - the prebuilt bundles of the source components (Mod Settings, CET, Audioware), pinned in components.json
-#   - Ripperdoc-<version>.zip (the app, which carries the CLI and that components.json)
-#   - SHA256SUMS and the release notes
-# With --publish it also commits components.json, tags v<version>, pushes, and creates the GitHub release.
+# Ripperdoc releases, in two steps, so what gets published is exactly what was tested:
 #
-#   scripts/release.sh 0.1.0             build and check locally
-#   scripts/release.sh 0.1.0 --publish  build, then publish
+#   scripts/release.sh build 0.1.0     build into release/0.1.0/: the prebuilt bundles of the source components
+#                                       (Mod Settings, CET, Audioware), pinned in components.json; Ripperdoc-0.1.0.zip
+#                                       (the app, carrying the CLI and that components.json); SHA256SUMS; the notes.
+#                                       Then test them (RIPPERDOC_ASSET_BASE=file://.../release/0.1.0) and commit
+#                                       components.json.
+#   scripts/release.sh publish 0.1.0   check that the committed pins match those files, tag v0.1.0, push, and
+#                                       create the GitHub release with them.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="${1:?usage: scripts/release.sh <version> [--publish]}"
-PUBLISH="${2:-}"
+STEP="${1:?usage: scripts/release.sh build|publish <version>}"
+VERSION="${2:?usage: scripts/release.sh build|publish <version>}"
 TAG="v$VERSION"
 REPO_SLUG="alporak/ripperdoc"
 OUT="$ROOT/release/$VERSION"
 BUILT=(modsettings cet audioware)
 
 cd "$ROOT"
-[[ -z "$(git status --porcelain -- . ':!release')" ]] || { echo "commit or stash your changes first" >&2; exit 1; }
-if [[ "$PUBLISH" == --publish ]] && git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-    echo "tag $TAG already exists" >&2; exit 1
+[[ -z "$(git status --porcelain)" ]] || { echo "commit or stash your changes first" >&2; exit 1; }
+
+if [[ "$STEP" == publish ]]; then
+    git rev-parse -q --verify "refs/tags/$TAG" >/dev/null && { echo "tag $TAG already exists" >&2; exit 1; }
+    (cd "$OUT" && shasum -a 256 -c SHA256SUMS >/dev/null) || { echo "release/$VERSION does not match its SHA256SUMS" >&2; exit 1; }
+    for id in "${BUILT[@]}"; do
+        i=$(bash -c "source lib/common.sh; component_index $id")
+        url=$(plutil -extract "components.$i.prebuilt_url" raw -o - components.json)
+        sha=$(plutil -extract "components.$i.prebuilt_sha256" raw -o - components.json)
+        [[ "$url" == "https://github.com/$REPO_SLUG/releases/download/$TAG/"* ]] || { echo "$id is not pinned to $TAG" >&2; exit 1; }
+        [[ "$(shasum -a 256 "$OUT/$(basename "$url")" | cut -d' ' -f1)" == "$sha" ]] || { echo "$id pin does not match its file" >&2; exit 1; }
+    done
+    unzip -p "$OUT/Ripperdoc-$VERSION.zip" Ripperdoc.app/Contents/Resources/ripperdoc/components.json | cmp -s - components.json ||
+        { echo "the app zip carries a different components.json than the committed one" >&2; exit 1; }
+    git tag -a "$TAG" -m "Ripperdoc $VERSION"
+    git push -q origin HEAD "$TAG"
+    gh release create "$TAG" --repo "$REPO_SLUG" --title "Ripperdoc $VERSION" --notes-file "$OUT/NOTES.md" \
+        "$OUT"/*.zip "$OUT/SHA256SUMS"
+    echo "published https://github.com/$REPO_SLUG/releases/tag/$TAG"
+    exit 0
 fi
+[[ "$STEP" == build ]] || { echo "usage: scripts/release.sh build|publish <version>" >&2; exit 1; }
 rm -rf "$OUT" && mkdir -p "$OUT"
 
 # 1. Bundles, built from the pinned sources (and Ripperdoc's patches).
@@ -54,12 +73,4 @@ sed "s/@VERSION@/$VERSION/g; s#@REPO@#$REPO_SLUG#g" docs/RELEASE_NOTES.md > "$OU
 cat "$OUT/SHA256SUMS"
 echo "release files in $OUT"
 
-[[ "$PUBLISH" == --publish ]] || { echo "not published (pass --publish)"; exit 0; }
-
-git add components.json
-git commit -q -m "Release $TAG: pin the prebuilt bundles"
-git tag -a "$TAG" -m "Ripperdoc $VERSION"
-git push -q origin HEAD "$TAG"
-gh release create "$TAG" --repo "$REPO_SLUG" --title "Ripperdoc $VERSION" --notes-file "$OUT/NOTES.md" \
-    "$OUT"/*.zip "$OUT/SHA256SUMS"
-echo "published https://github.com/$REPO_SLUG/releases/tag/$TAG"
+echo "next: test with RIPPERDOC_ASSET_BASE=file://$OUT, commit components.json, then: scripts/release.sh publish $VERSION"
