@@ -15,6 +15,9 @@ redscript, CET, ArchiveXL, TweakXL, Codeware and more. It uses the community Mac
 3. On the **Status** page, run *Create the game copy*, then *Install all frameworks*.
 4. Start Steam, then press **Play** in Ripperdoc.
 
+> The release is unsigned because I don't have an Apple Developer account. Feel free to donate if you'd like a signed
+> release!
+
 ## How it works
 
 - **Your Steam install is never modified.** Ripperdoc clones the game into `~/Games/Cyberpunk 2077 Ripperdoc` with an

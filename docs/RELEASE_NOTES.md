@@ -13,6 +13,9 @@ Input Loader and Audioware. No developer tools needed.
 3. On the **Status** page, click **Run** next to *Create the game copy*, then next to *Install all frameworks*.
 4. Start Steam, then click **Play** in Ripperdoc.
 
+> The release is unsigned because I don't have an Apple Developer account. Feel free to donate if you'd like a signed
+> release!
+
 Ripperdoc never changes your Steam install. It makes a copy of the game in `~/Games/Cyberpunk 2077 Ripperdoc` that
 takes no extra disk space, and installs everything there. Steam's own Play button keeps starting the normal game.
 
