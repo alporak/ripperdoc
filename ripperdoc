@@ -4,6 +4,7 @@
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
 source "$RIPPERDOC_ROOT/lib/mods.sh"
+source "$RIPPERDOC_ROOT/lib/graphics.sh"
 
 usage() {
     cat <<EOF
@@ -18,6 +19,8 @@ usage: ripperdoc <command>
   mod add <file>     install a mod (.zip/.rar/.7z or folder, Windows layout); [--name NAME] [--force]
   mod remove <name>  remove exactly the files that mod installed
   mod list           installed mods
+  graphics show      the current graphics settings
+  graphics apply <p> apply a graphics profile (profiles/); graphics set <group> <name> <value>; graphics reset
   refresh            after a Steam update: re-clone the game, keep mods and frameworks
   uninstall --yes    delete the game copy (the Steam install is untouched)
 
@@ -404,6 +407,7 @@ case "${1:-}" in
     play) shift; cmd_play "$@" ;;
     doctor) shift; cmd_doctor "$@" ;;
     mod) shift; cmd_mod "$@" ;;
+    graphics) shift; cmd_graphics "$@" ;;
     build-bundle) shift; [[ $# -eq 2 ]] || die "usage: ripperdoc build-bundle <id> <outdir>"; mkdir -p "$2"; "build_$1" "$2" ;;
     refresh) shift; cmd_refresh "$@" ;;
     uninstall) shift; cmd_uninstall "$@" ;;
