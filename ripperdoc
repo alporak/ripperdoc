@@ -94,6 +94,20 @@ install_red4ext() {
     rm -rf "$dir"
     # The release's own installer does the build check, binary backup and re-signing; run it inside the copy.
     "$GAME/red4ext/macos/scripts/install_macos.sh"
+    patch_launcher
+}
+
+# After the game quits, the RED4ext launcher recompiles the scripts without the plugins' scripts, so that a later
+# launch from Steam (without RED4ext) still starts. Ripperdoc's copy is never launched from Steam (Steam starts the
+# untouched install), and that recompile fails for every mod that uses Codeware or Mod Settings: the compiler then
+# shows a "compilation failed" alert after every session. Keep the cleanup of the staged scripts, drop the recompile.
+patch_launcher() {
+    local f="$GAME/launch_red4ext.sh"
+    [[ -f "$f" ]] || return 0
+    grep -q 'ripperdoc: no recompile on exit' "$f" && return 0
+    perl -0pi -e 's{(cleanup\(\) \{\n[^\n]*\n)\s*\[\[ -x "\$SCRIPT_DIR/engine/tools/scc" \]\] && "\$SCRIPT_DIR/engine/tools/scc" -compile "\$SCRIPT_DIR/r6/scripts" >/dev/null 2>&1 \|\| true\n}{$1    : # ripperdoc: no recompile on exit (the copy is only ever started by Ripperdoc)\n}' "$f"
+    grep -q 'ripperdoc: no recompile on exit' "$f" ||
+        warn "could not adjust launch_red4ext.sh: expect a harmless 'compilation failed' alert after quitting the game"
 }
 
 install_redscript() {
@@ -389,6 +403,7 @@ cmd_refresh() {
         return
     fi
     [[ -d "$GAME/red4ext" ]] && "$GAME/red4ext/macos/scripts/install_macos.sh"
+    patch_launcher
     prepare_inputloader
     ok "refreshed"
 }
@@ -408,6 +423,7 @@ case "${1:-}" in
     doctor) shift; cmd_doctor "$@" ;;
     mod) shift; cmd_mod "$@" ;;
     graphics) shift; cmd_graphics "$@" ;;
+    patch-launcher) shift; require_copy; patch_launcher; grep -n 'ripperdoc: no recompile' "$GAME/launch_red4ext.sh" ;;
     build-bundle) shift; [[ $# -eq 2 ]] || die "usage: ripperdoc build-bundle <id> <outdir>"; mkdir -p "$2"; "build_$1" "$2" ;;
     refresh) shift; cmd_refresh "$@" ;;
     uninstall) shift; cmd_uninstall "$@" ;;
