@@ -64,7 +64,7 @@ PY
 done
 
 # 2. The app, carrying the updated components.json.
-app/build-app.sh >/dev/null
+RIPPERDOC_VERSION="$VERSION" app/build-app.sh >/dev/null
 (cd app/build && ditto -c -k --keepParent --norsrc Ripperdoc.app "$OUT/Ripperdoc-$VERSION.zip")
 
 # 3. Checksums and notes.

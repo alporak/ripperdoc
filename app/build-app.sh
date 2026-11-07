@@ -5,7 +5,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/.." && pwd)"
 OUT="$HERE/build/Ripperdoc.app"
-VERSION="$(git -C "$REPO" describe --tags --always 2>/dev/null || echo dev)"
+VERSION="${RIPPERDOC_VERSION:-$(git -C "$REPO" describe --tags --always 2>/dev/null || echo dev)}"
 
 cd "$HERE"
 swift build -c release --arch arm64 2>&1 | grep -vE "search path .* not found" || true
