@@ -4,6 +4,15 @@ Input Loader and Audioware. No developer tools needed.
 
 > Unofficial. Not affiliated with CD PROJEKT RED or with the frameworks' authors. Back up your saves.
 
+## What's new in @VERSION@
+
+- **Graphics page:** switch to **Clarity**, a profile measured on a base M4 for a clearly sharper image (MetalFX Quality,
+  High textures, 16× filtering, more sharpening, capped at 60 fps), or back to your own settings at any time. Run the
+  game's built-in benchmark from the app to measure any change.
+- **No more "compilation failed" alert** after quitting the game.
+- **Game output is saved** for every session (Status page > *Open game output logs*), so crashes can be diagnosed.
+- Fixed **Play** failing right after an update with log saving.
+
 ## Install
 
 1. Download **Ripperdoc-@VERSION@.zip** below and double-click it. Move **Ripperdoc** to your Applications folder.
