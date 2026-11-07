@@ -14,10 +14,14 @@ struct RipperdocApp: App {
         WindowGroup("Ripperdoc") {
             ContentView()
                 .environmentObject(model)
+                .environmentObject(model.support)
                 .frame(minWidth: 820, minHeight: 520)
         }
         .commands {
             CommandGroup(replacing: .newItem) {}
+            CommandGroup(after: .help) {
+                Button("Support Ripperdoc…") { SupportPrompt.open() }
+            }
         }
     }
 }
@@ -49,6 +53,7 @@ final class ModsUIState: ObservableObject {
 
 struct ContentView: View {
     @EnvironmentObject var model: AppModel
+    @EnvironmentObject var support: SupportPrompt
     @StateObject private var selection = Selection()
 
     var body: some View {
@@ -58,8 +63,16 @@ struct ContentView: View {
             }
             .navigationSplitViewColumnWidth(170)
             .safeAreaInset(edge: .bottom) {
-                Text("Unofficial. Not affiliated with CD PROJEKT RED.")
-                    .font(.caption2).foregroundStyle(.secondary).padding(8)
+                VStack(alignment: .leading, spacing: 6) {
+                    Button { SupportPrompt.open() } label: {
+                        Label("Support Ripperdoc", systemImage: "cup.and.saucer")
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Buy me a coffee")
+                    Text("Unofficial. Not affiliated with CD PROJEKT RED.")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+                .padding(8)
             }
         } detail: {
             VStack(spacing: 0) {
@@ -82,6 +95,13 @@ struct ContentView: View {
                 case .mods: ModsView()
                 case .log: LogView()
                 }
+            }
+        }
+        .sheet(isPresented: $support.isPresented) { SupportSheet(prompt: support) }
+        .onAppear {
+            // For screenshots and testing: RIPPERDOC_SHOW_SUPPORT=1 shows the support sheet once the window is up.
+            if ProcessInfo.processInfo.environment["RIPPERDOC_SHOW_SUPPORT"] == "1" {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { support.isPresented = true }
             }
         }
         .toolbar {

@@ -1,5 +1,7 @@
 # Ripperdoc
 
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-alporak-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/alporak)
+
 One-click installer and launcher for Cyberpunk 2077 mod frameworks on **native macOS (Apple Silicon)**: RED4ext,
 redscript, CET, ArchiveXL, TweakXL, Codeware and more. It uses the community Mac ports.
 
@@ -15,8 +17,8 @@ redscript, CET, ArchiveXL, TweakXL, Codeware and more. It uses the community Mac
 3. On the **Status** page, run *Create the game copy*, then *Install all frameworks*.
 4. Start Steam, then press **Play** in Ripperdoc.
 
-> The release is unsigned because I don't have an Apple Developer account. Feel free to donate if you'd like a signed
-> release!
+> The release is unsigned because I don't have an Apple Developer account. Feel free to
+> [donate](https://buymeacoffee.com/alporak) if you'd like a signed release!
 
 ## How it works
 
@@ -112,6 +114,11 @@ and it goes away once the fix is merged upstream.
 Ripperdoc also works around two install issues without patching anyone's code: it installs `ModSettings.archive.xl`
 (without it, the menu entry has no label), and it gives Input Loader the game's 2.5 input file under the 2.3 name the
 script reads, instead of the stale 2.31 configs in its repository.
+
+## Support
+
+A lot of work went into making these frameworks run on the Mac. If Ripperdoc saved you time, I'd appreciate it if you
+[buy me a coffee](https://buymeacoffee.com/alporak). It also helps toward a signed, notarized release.
 
 ## Credits
 

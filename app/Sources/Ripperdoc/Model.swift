@@ -116,8 +116,10 @@ final class AppModel: ObservableObject {
     }
 
     /// Run a CLI command that changes things, with its output in the log, then re-read the state.
-    func perform(_ title: String, _ args: [String]) async {
-        guard busy == nil else { return }
+    /// Returns the command's exit status (-1 when another command was already running).
+    @discardableResult
+    func perform(_ title: String, _ args: [String]) async -> Int32 {
+        guard busy == nil else { return -1 }
         busy = title
         lastError = nil
         log.append("$ ripperdoc \(args.joined(separator: " "))")
@@ -129,13 +131,18 @@ final class AppModel: ObservableObject {
         busy = nil
         reload()
         await doctor()
+        return status
     }
 
     func setup() async { await perform("Setting up the game copy", ["setup"]) }
     func installAll() async { await perform("Installing frameworks", ["install"]) }
     func install(_ id: String) async { await perform("Installing \(id)", ["install", id]) }
     func refresh() async { await perform("Refreshing after a game update", ["refresh"]) }
-    func addMod(_ url: URL) async { await perform("Installing \(url.lastPathComponent)", ["mod", "add", url.path]) }
+    func addMod(_ url: URL) async {
+        if await perform("Installing \(url.lastPathComponent)", ["mod", "add", url.path]) == 0 {
+            support.considerAsking()
+        }
+    }
     func removeMod(_ name: String) async { await perform("Removing \(name)", ["mod", "remove", name]) }
 
     /// The game runs as long as the launcher does; its output (script compile, plugin logs) goes to the log.
@@ -143,13 +150,20 @@ final class AppModel: ObservableObject {
         guard !gameRunning, busy == nil else { return }
         log.append("$ ripperdoc play")
         gameRunning = true
+        let started = Date()
         Task { [weak self] in
             let status = await CLI.run(["play"]) { line in self?.log.append(line) }
             guard let self else { return }
             log.append("game exited (status \(status))")
             reload()
+            // Ask after a real session that ended normally, when the player is back in the app; never at launch.
+            if status == 0, Date().timeIntervalSince(started) > 120 {
+                support.considerAsking()
+            }
         }
     }
+
+    let support = SupportPrompt()
 
     func revealGame() { NSWorkspace.shared.activateFileViewerSelecting([game]) }
 
