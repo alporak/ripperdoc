@@ -321,7 +321,14 @@ cmd_play() {
     require_copy
     [[ -x "$GAME/launch_red4ext.sh" ]] || die "RED4ext is not installed. Run: ripperdoc install"
     pgrep -q steam_osx || warn "Steam is not running: start Steam and sign in first, or saves will not load."
-    exec "$GAME/launch_red4ext.sh" "$@"
+    # Keep the game's console output (script compile, plugin logs, RED4ext's crash handler) for diagnosing crashes.
+    mkdir -p "$PLAY_LOGS"
+    local log
+    log="$PLAY_LOGS/play-$(date +%Y-%m-%d-%H%M%S).log"
+    ls -t "$PLAY_LOGS"/play-*.log 2>/dev/null | tail -n +20 | while IFS= read -r old; do rm -f "$old"; done
+    info "game output is saved to $log"
+    "$GAME/launch_red4ext.sh" "$@" 2>&1 | tee "$log"
+    return "${PIPESTATUS[0]}"
 }
 
 cmd_doctor() {
@@ -349,6 +356,8 @@ cmd_doctor() {
     local latest
     latest=$(ls -t "$GAME"/red4ext/logs/red4ext-*.log 2>/dev/null | head -1 || true)
     [[ -n "$latest" ]] && info "newest RED4ext log: $latest"
+    latest=$(ls -t "$PLAY_LOGS"/play-*.log 2>/dev/null | head -1 || true)
+    [[ -n "$latest" ]] && info "newest game output: $latest"
     return $bad
 }
 

@@ -7,6 +7,7 @@ COMPONENTS_JSON="$RIPPERDOC_ROOT/components.json"
 SOURCE_GAME="${RIPPERDOC_SOURCE_GAME:-$HOME/Library/Application Support/Steam/steamapps/common/Cyberpunk 2077}"
 GAME="${RIPPERDOC_GAME:-$HOME/Games/Cyberpunk 2077 Ripperdoc}"
 CACHE="${RIPPERDOC_CACHE:-$HOME/Library/Caches/ripperdoc}"
+PLAY_LOGS="${RIPPERDOC_LOGS:-$HOME/Library/Logs/Ripperdoc}"
 
 STATE_DIR="$GAME/.ripperdoc"
 APP_REL="Cyberpunk2077.app"

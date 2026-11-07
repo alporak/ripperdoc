@@ -156,6 +156,7 @@ struct StatusView: View {
                     HStack {
                         Button("Show game copy in Finder") { model.revealGame() }
                         Button("Open framework logs") { model.revealLogs() }
+                        Button("Open game output logs") { model.revealPlayLogs() }
                         Spacer()
                         Button("Re-check") { Task { await model.doctor() } }
                     }

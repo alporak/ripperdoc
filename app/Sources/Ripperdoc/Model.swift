@@ -170,4 +170,11 @@ final class AppModel: ObservableObject {
     func revealLogs() {
         NSWorkspace.shared.open(game.appendingPathComponent("red4ext/logs"))
     }
+
+    /// The game's console output of each play session (written by `ripperdoc play`).
+    func revealPlayLogs() {
+        let dir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/Ripperdoc")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        NSWorkspace.shared.open(dir)
+    }
 }
