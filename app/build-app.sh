@@ -15,7 +15,7 @@ BIN="$(swift build -c release --arch arm64 --show-bin-path)/Ripperdoc"
 rm -rf "$OUT"
 mkdir -p "$OUT/Contents/MacOS" "$OUT/Contents/Resources/ripperdoc"
 cp "$BIN" "$OUT/Contents/MacOS/Ripperdoc"
-for f in ripperdoc lib components.json patches LICENSE README.md; do
+for f in ripperdoc lib components.json patches profiles LICENSE README.md; do
     ditto "$REPO/$f" "$OUT/Contents/Resources/ripperdoc/$f"
 done
 [[ -f "$HERE/AppIcon.icns" ]] && cp "$HERE/AppIcon.icns" "$OUT/Contents/Resources/AppIcon.icns"
