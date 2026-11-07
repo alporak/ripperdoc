@@ -28,7 +28,8 @@ per-frame times) and the settings. Each step builds on the last one that was kep
 | 7 | LOD Medium (on run 4) | 54.4 | 29.9 | 10 GB | +366 MB | no: swapping |
 | 8 | control: run 4 again | 56.7 | 38.4 | 9.9 GB | +0 | confirms run 4 |
 
-**Result:** runs 1–4: about 57 fps average and a 38 fps 1%-low uncapped, played capped at 30.
+**Result:** runs 1–4: about 57 fps average and a 38 fps 1%-low uncapped. The profile caps at 60, which played well;
+for perfectly even pacing in heavy scenes, cap at 30 instead (`ripperdoc graphics set /video/display MaximumFPS_Value 30`).
 
 ## What didn't work, and why
 
@@ -39,8 +40,7 @@ per-frame times) and the settings. Each step builds on the last one that was kep
 - **Mip bias / texture streaming engine settings** can't be changed on the Mac yet: the Mac port of Cyber Engine Tweaks
   has no access to the engine's config system (`GameOptions.Dump()` returns 0 options), and their config sections aren't
   plain strings in the Mac binary.
-- **Frame generation** wasn't measured for this profile: with a 30 fps cap it can't add anything. For a smoother but
-  laggier 60, try MetalFX frame generation on top of Clarity yourself.
+- **Frame generation** wasn't measured for this profile, which already runs close to its 60 cap.
 - **HD texture packs:** not tried. Whether loose archives can replace base-game textures on the Mac is disputed, and
   memory is already the limit.
 

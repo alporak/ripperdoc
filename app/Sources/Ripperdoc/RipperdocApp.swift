@@ -287,7 +287,7 @@ struct GraphicsView: View {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Clarity").font(.headline)
-                        Text("A sharper image at a steady 30 fps, measured on a base M4: MetalFX Quality, High textures, 16x filtering, more sharpening.")
+                        Text("A sharper image that stays above 30 fps, capped at 60, measured on a base M4: MetalFX Quality, High textures, 16x filtering, more sharpening.")
                             .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer()

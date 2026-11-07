@@ -101,7 +101,7 @@ Keyboard Shortcuts > Mission Control) or press fn+F11, or change the key in CET'
 ## Graphics
 
 The app's **Graphics** page (or `./ripperdoc graphics`) switches between your own settings and **Clarity**, a profile
-measured to give a noticeably sharper image at a steady 30 fps on a base M4, and runs the game's benchmark to measure
+measured to give a noticeably sharper image while staying above 30 fps on a base M4, and runs the game's benchmark to measure
 any change. See [docs/GRAPHICS.md](docs/GRAPHICS.md) for the numbers.
 
 ## Status
