@@ -43,7 +43,12 @@ die "unknown command $cmd\n" unless $cmd eq 'set' && defined $value;
 # The new value as JSON text, and the list index for list options.
 my $type = $opt->{type} // '';
 my ($new, $index);
-if ($type =~ /_list$/) {
+if ($type =~ /_list$/ && $opt->{is_dynamic} && !$opt->{values}) {
+    # The game builds this list at runtime (e.g. Resolution) and stores no choices: take the value as given and keep
+    # the stored index. The caller has to check the game accepted it (a benchmark's summary.json reports what ran).
+    die "$name: '$value' is not a resolution like 2560x1440\n" if $name eq 'Resolution' && $value !~ /^\d+x\d+$/;
+    $new = $json->encode($value);
+} elsif ($type =~ /_list$/) {
     my @values = @{ $opt->{values} };
     ($index) = grep { show($values[$_]) eq $value } 0 .. $#values;
     die "$name has no value '$value' (choices: @{[ map { show($_) } @values ]})\n" unless defined $index;

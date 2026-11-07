@@ -27,13 +27,14 @@ struct RipperdocApp: App {
 }
 
 enum Pane: String, CaseIterable, Identifiable {
-    case status = "Status", frameworks = "Frameworks", mods = "Mods", log = "Log"
+    case status = "Status", frameworks = "Frameworks", mods = "Mods", graphics = "Graphics", log = "Log"
     var id: String { rawValue }
     var icon: String {
         switch self {
         case .status: "stethoscope"
         case .frameworks: "cpu"
         case .mods: "shippingbox"
+        case .graphics: "sparkles.tv"
         case .log: "text.alignleft"
         }
     }
@@ -93,6 +94,7 @@ struct ContentView: View {
                 case .status: StatusView()
                 case .frameworks: FrameworksView()
                 case .mods: ModsView()
+                case .graphics: GraphicsView()
                 case .log: LogView()
                 }
             }
@@ -273,6 +275,61 @@ struct ModsView: View {
                 if access { url.stopAccessingSecurityScopedResource() }
             }
         }
+    }
+}
+
+struct GraphicsView: View {
+    @EnvironmentObject var model: AppModel
+
+    var body: some View {
+        Form {
+            Section {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Clarity").font(.headline)
+                        Text("A sharper image at a steady 30 fps, measured on a base M4: MetalFX Quality, High textures, 16x filtering, more sharpening.")
+                            .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer()
+                    Button("Apply") { Task { await model.applyProfile("clarity") } }
+                }
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("My original settings").font(.headline)
+                        Text("What you had before Ripperdoc changed anything.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button("Restore") { Task { await model.resetGraphics() } }
+                }
+            } header: {
+                Text("Profiles")
+            } footer: {
+                Text("These are the game's own settings, so they also apply when you start the game from Steam. Change them while the game is closed.")
+            }
+            .disabled(model.busy != nil || model.gameRunning)
+
+            Section("Current settings") {
+                ForEach(model.graphicsSettings, id: \.key) { s in
+                    LabeledContent(s.key, value: s.value)
+                }
+            }
+
+            Section {
+                ForEach(model.benchRuns, id: \.self) { Text($0).font(.caption.monospaced()) }
+                HStack {
+                    Spacer()
+                    Button("Run benchmark") { Task { await model.runBenchmark() } }
+                        .disabled(model.busy != nil || model.gameRunning || !model.hasCopy)
+                }
+            } header: {
+                Text("Benchmarks")
+            } footer: {
+                Text("Runs the game's built-in benchmark with the frame cap off, and records average FPS, the slowest 1% of frames, and memory. The game opens and closes by itself; don't touch it.")
+            }
+        }
+        .formStyle(.grouped)
+        .task { await model.reloadGraphics() }
     }
 }
 

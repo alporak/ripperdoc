@@ -5,6 +5,7 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
 source "$RIPPERDOC_ROOT/lib/mods.sh"
 source "$RIPPERDOC_ROOT/lib/graphics.sh"
+source "$RIPPERDOC_ROOT/lib/bench.sh"
 
 usage() {
     cat <<EOF
@@ -21,6 +22,8 @@ usage: ripperdoc <command>
   mod list           installed mods
   graphics show      the current graphics settings
   graphics apply <p> apply a graphics profile (profiles/); graphics set <group> <name> <value>; graphics reset
+  bench [label]      run the game's benchmark (about 3 minutes, hands off) and record FPS and memory
+  bench list         past benchmark runs
   refresh            after a Steam update: re-clone the game, keep mods and frameworks
   uninstall --yes    delete the game copy (the Steam install is untouched)
 
@@ -423,6 +426,7 @@ case "${1:-}" in
     doctor) shift; cmd_doctor "$@" ;;
     mod) shift; cmd_mod "$@" ;;
     graphics) shift; cmd_graphics "$@" ;;
+    bench) shift; if [[ "${1:-}" == list ]]; then cmd_bench_list; else cmd_bench "$@"; fi ;;
     patch-launcher) shift; require_copy; patch_launcher; grep -n 'ripperdoc: no recompile' "$GAME/launch_red4ext.sh" ;;
     build-bundle) shift; [[ $# -eq 2 ]] || die "usage: ripperdoc build-bundle <id> <outdir>"; mkdir -p "$2"; "build_$1" "$2" ;;
     refresh) shift; cmd_refresh "$@" ;;

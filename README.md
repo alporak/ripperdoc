@@ -98,6 +98,12 @@ By hand, files go into the **clone** (`~/Games/Cyberpunk 2077 Ripperdoc`), in th
 **CET overlay key:** F11. macOS uses F11 for Show Desktop, so either turn that off (System Settings > Keyboard >
 Keyboard Shortcuts > Mission Control) or press fn+F11, or change the key in CET's Bindings tab.
 
+## Graphics
+
+The app's **Graphics** page (or `./ripperdoc graphics`) switches between your own settings and **Clarity**, a profile
+measured to give a noticeably sharper image at a steady 30 fps on a base M4, and runs the game's benchmark to measure
+any change. See [docs/GRAPHICS.md](docs/GRAPHICS.md) for the numbers.
+
 ## Status
 
 See [docs/STATUS.md](docs/STATUS.md) for what is verified on 2.5.0, and what is still missing.

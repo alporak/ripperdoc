@@ -145,6 +145,42 @@ final class AppModel: ObservableObject {
     }
     func removeMod(_ name: String) async { await perform("Removing \(name)", ["mod", "remove", name]) }
 
+    // MARK: graphics (ripperdoc graphics / bench)
+
+    @Published var graphicsSettings: [(key: String, value: String)] = []
+    @Published var benchRuns: [String] = []
+
+    func reloadGraphics() async {
+        final class Lines { var items: [String] = [] }
+        let settings = Lines(), runs = Lines()
+        _ = await CLI.run(["graphics", "show"]) { settings.items.append($0) }
+        _ = await CLI.run(["bench", "list"]) { line in if !line.hasPrefix("==>") { runs.items.append(line) } }
+        graphicsSettings = settings.items.compactMap { line in
+            // "/graphics/presets MetalFX                 Quality"
+            let parts = line.split(separator: " ", omittingEmptySubsequences: true)
+            guard parts.count >= 3 else { return nil }
+            return (key: String(parts[1]), value: parts[2...].joined(separator: " "))
+        }
+        benchRuns = runs.items
+    }
+
+    func applyProfile(_ name: String) async {
+        await perform("Applying the \(name) graphics profile", ["graphics", "apply", name])
+        await reloadGraphics()
+    }
+
+    func resetGraphics() async {
+        await perform("Restoring your original graphics settings", ["graphics", "reset"])
+        await reloadGraphics()
+    }
+
+    func runBenchmark() async {
+        let label = "app-" + DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short)
+            .replacingOccurrences(of: " ", with: "").replacingOccurrences(of: ":", with: "")
+        await perform("Running the benchmark (about 3 minutes; hands off)", ["bench", label])
+        await reloadGraphics()
+    }
+
     /// The game runs as long as the launcher does; its output (script compile, plugin logs) goes to the log.
     func play() {
         guard !gameRunning, busy == nil else { return }
