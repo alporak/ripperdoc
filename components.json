@@ -56,8 +56,8 @@
         "red4ext",
         "redscript"
       ],
-      "prebuilt_url": "https://github.com/alporak/ripperdoc/releases/download/v0.1.0/modsettings-0.2.21-ceb4354-macos-arm64.zip",
-      "prebuilt_sha256": "2c3f8935c4b19eccc8d4c2eca26c801d8a773b4ea15c76708119cfe77703b6e3"
+      "prebuilt_url": "https://github.com/alporak/ripperdoc/releases/download/v0.2.0/modsettings-0.2.21-ceb4354-macos-arm64.zip",
+      "prebuilt_sha256": "829f160ade28f53a6be1b88f69fa3e693d06f3e7f4e06bd8226de07a51338c9c"
     },
     {
       "id": "cet",
@@ -106,8 +106,8 @@
         "red4ext",
         "redscript"
       ],
-      "prebuilt_url": "https://github.com/alporak/ripperdoc/releases/download/v0.1.0/cet-1.37.1-b4a0e23-macos-arm64.zip",
-      "prebuilt_sha256": "462f159dcfe2e80ed988db76360739884ebc7d1c4aad48b350c2a2bdedebd449"
+      "prebuilt_url": "https://github.com/alporak/ripperdoc/releases/download/v0.2.0/cet-1.37.1-b4a0e23-macos-arm64.zip",
+      "prebuilt_sha256": "94a288ff48fe415feec7f724629257e97fc280a89f6ba8b3112021a3170ab660"
     },
     {
       "id": "audioware",
@@ -124,8 +124,8 @@
         "red4ext",
         "redscript"
       ],
-      "prebuilt_url": "https://github.com/alporak/ripperdoc/releases/download/v0.1.0/audioware-1.11.1-rc.0-0d9dad6-macos-arm64.zip",
-      "prebuilt_sha256": "a15b6dde37acae031010973c05779c0a0f1bd4696c1ba5013aad273f1d812b43"
+      "prebuilt_url": "https://github.com/alporak/ripperdoc/releases/download/v0.2.0/audioware-1.11.1-rc.0-0d9dad6-macos-arm64.zip",
+      "prebuilt_sha256": "b9a7d39eb9221f4bf402c178abadf4cd814da88a71a5832f54549209951da501"
     }
   ]
 }
